@@ -8,3 +8,14 @@
 export interface AppUnderstandingTypes {
   // Add properties here
 }
+
+export interface Entity {
+  name: string;
+  fields: string[];
+  relations: string[];
+}
+
+export interface AppUnderstanding {
+  appName: string;
+  entities: Entity[];
+}
