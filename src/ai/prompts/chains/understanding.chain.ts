@@ -54,9 +54,9 @@ export class UnderstandingChain {
     ];
 
     // Execute the orchestrated steps
-    const finalContext = await this.runner.executeChain(steps, { userPrompt });
+    const finalContext = await this.runner.executeChain<{ architecture_extraction: AppUnderstanding }>(steps, { userPrompt });
     
     // Return strongly-typed outcome
-    return finalContext.architecture_extraction as AppUnderstanding;
+    return finalContext.architecture_extraction;
   }
 }
