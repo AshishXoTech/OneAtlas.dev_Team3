@@ -11,13 +11,10 @@ The **AI Understanding Layer** is the cognitive core of the OneAtlas.dev platfor
 ## 🚀 Key Capabilities
 
 - **🧠 Multi-Provider Orchestration**: Intelligent routing between **OpenAI**, **Groq**, and **Google Gemini** with automatic failover and model-tiering (FAST vs. CAPABLE).
-- **🏗️ Rich Architectural Extraction**: Extracts not just entity names, but deep blueprints including fields, relationships, UI pages, features, and business workflows.
+- **⛓️ Modular Chain System**: A state-of-the-art `ChainRunner` that orchestrates complex multi-step AI reasoning sequences with dynamic context merging.
+- **🏗️ Rich Architectural Extraction**: Extracts deep blueprints including fields, relationships, UI pages, features, and business workflows.
 - **🛡️ Self-Healing Pipeline**: Integrated `ResponseRecovery` system that automatically detects malformed LLM JSON and utilizes a secondary "repair loop" to fix it using Zod-driven error feedback.
-- **⚡ Ultra-Low Latency**: Heuristic early-abort mechanisms for trivially short prompts and parallel extraction chains for complex architectural design.
-- **🔧 Production-Grade Infrastructure**: 
-  - ESM-native architecture for modern Node.js performance.
-  - Cross-platform path handling (Full Windows/Linux/Mac support).
-  - Robust state management via Upstash Redis.
+- **⚡ Ultra-Low Latency**: Heuristic early-abort mechanisms and parallel extraction chains for high-speed performance.
 
 ---
 
@@ -26,10 +23,11 @@ The **AI Understanding Layer** is the cognitive core of the OneAtlas.dev platfor
 ```text
 src/ai/
 ├── gateway/          # AI Provider Abstraction (OpenAI, Gemini, Groq)
+├── prompts/          # System prompts and modular Chain logic
+│   └── chains/       # Orchestrated multi-step extraction chains
 ├── understanding/    # Core Extraction Logic (Intent, Features, AppType)
 ├── validation/       # Zod Schemas, Output Formatters, & Recovery Pipeline
 ├── shared/           # Authoritative Contracts, Types, and Utils
-├── generators/       # Teammate's Generation Engine (Prisma, Pages, CRUD)
 └── workflows/        # Orchestration Pipeline & Redis State Store
 ```
 
@@ -52,12 +50,16 @@ Copy the example environment file and fill in your API keys:
 cp .env.example .env
 ```
 > [!IMPORTANT]
-> At least one of `OPENAI_API_KEY`, `GROQ_API_KEY`, or `GEMINI_API_KEY` is required.
+> The system includes **Automatic Fallback**. If OpenAI is out of quota, it will automatically reroute to Groq or Gemini.
 
-### 4. Running the AI Stress Tests
-Validate the entire pipeline against 14+ complex architectural prompts:
+### 4. Running Tests
+Validate the entire pipeline or specific modules:
 ```bash
+# Run the full AI Stress Test suite (14+ scenarios)
 npm run test:ai
+
+# Run the Modular Understanding Chain verification
+npm run test:chain
 ```
 
 ---
