@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { BaseProvider } from '../../gateway/providers/base.provider.js';
 import { ResponseRecovery } from '../recovery/response.recovery.js';
+import { OutputFormatter } from '../formatters/output.formatter.js';
 import { calculateBackoff, delay, withTimeout, RetryConfig, DEFAULT_RETRY_CONFIG } from '../recovery/fallback.strategies.js';
 import { AIRequest, AIResponse } from '../../gateway/types/gateway.types.js';
 
@@ -52,7 +53,8 @@ export class ValidationOrchestrator {
 
         // Step 2: Enforce Strict Schema Validation manually to catch parsing failures natively
         try {
-          const rawJson = JSON.parse(response.content);
+          const cleanedContent = OutputFormatter.format(response.content);
+          const rawJson = JSON.parse(cleanedContent);
           const validatedOutput = request.schema.parse(rawJson);
           return { success: true, data: validatedOutput };
         } catch (validationError) {

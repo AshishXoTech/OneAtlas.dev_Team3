@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { BaseProvider } from '../../gateway/providers/base.provider.js';
+import { OutputFormatter } from '../formatters/output.formatter.js';
 import { AIRequest, AIResponse } from '../../gateway/types/gateway.types.js';
 
 export class ResponseRecovery {
@@ -60,7 +61,8 @@ Please repair the payload so it passes validation.`;
       // We cannot rely on response.parsedOutput because non-OpenAI providers 
       // (e.g. GroqProvider) intentionally return parsedOutput: undefined.
       try {
-        const repairedJson = JSON.parse(response.content);
+        const cleanedContent = OutputFormatter.format(response.content);
+        const repairedJson = JSON.parse(cleanedContent);
         const validated = schema.parse(repairedJson);
         console.log(`[ResponseRecovery] Successfully repaired and validated JSON for: ${schemaName}`);
         return { success: true, data: validated };
