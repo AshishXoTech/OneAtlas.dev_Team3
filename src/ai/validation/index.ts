@@ -1,9 +1,8 @@
-// TODO: Module entry point - Barrel file
-
-export * from './schemas/app-understanding.schema';
-export * from './schemas/feature.schema';
-export * from './schemas/intent.schema';
-export * from './recovery/response.recovery';
-export * from './recovery/fallback.strategies';
-export * from './formatters/output.formatter';
-export * from './orchestrator/validation.orchestrator';
+// Validation Module Entry Point
+export * from './schemas/app-understanding.schema.js';
+export * from './schemas/feature.schema.js';
+export * from './schemas/intent.schema.js';
+export * from './recovery/response.recovery.js';
+export * from './recovery/fallback.strategies.js';
+export * from './formatters/output.formatter.js';
+export * from './orchestrator/validation.orchestrator.js';

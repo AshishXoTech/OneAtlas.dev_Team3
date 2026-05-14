@@ -1,7 +1,7 @@
 import { ModelRouter } from '../../gateway/router/model.router.js';
 import { ValidationOrchestrator } from '../../validation/orchestrator/validation.orchestrator.js';
 import { FAST_RETRY_CONFIG } from '../../validation/recovery/fallback.strategies.js';
-import { z } from 'zod';
+import { IntentSchema } from '../../validation/schemas/intent.schema.js';
 
 export class IntentExtractor {
   constructor(private router: ModelRouter) {}
@@ -14,11 +14,6 @@ export class IntentExtractor {
     const { provider, config } = this.router.getProviderForTask('INTENT_EXTRACTION');
     const orchestrator = new ValidationOrchestrator(provider);
 
-    const schema = z.object({
-      primaryIntent: z.string()
-        .describe("A highly concise, 3-7 word summary title representing what the user wants to build.")
-    });
-
     // Intent is lightweight metadata. Fail fast and fallback cleanly if needed.
     const result = await orchestrator.executeWithValidation({
       prompt,
@@ -30,7 +25,7 @@ IMPORTANT: You MUST reply with this EXACT JSON format — nothing else:
 The value must be a plain string of 3-7 words. Do NOT nest objects. Do NOT add extra keys.`,
       schemaName: 'IntentExtraction',
       modelTier: config.preferredTier,
-      schema
+      schema: IntentSchema
     }, FAST_RETRY_CONFIG);
 
     if (result.success) return result.data.primaryIntent;

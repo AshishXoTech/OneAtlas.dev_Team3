@@ -1,20 +1,7 @@
 import { ModelRouter } from '../../gateway/router/model.router.js';
 import { ValidationOrchestrator } from '../../validation/orchestrator/validation.orchestrator.js';
 import { CRITICAL_RETRY_CONFIG } from '../../validation/recovery/fallback.strategies.js';
-import { z } from 'zod';
-
-export interface ExtractedEntity {
-  name: string;
-  fields: string[];
-  relations: string[];
-}
-
-export interface FeatureExtractionResult {
-  features: string[];
-  pages: string[];
-  entities: ExtractedEntity[];
-  workflows: string[];
-}
+import { FeatureSchema, FeatureArchitecture } from '../../validation/schemas/feature.schema.js';
 
 export class FeatureExtractor {
   constructor(private router: ModelRouter) {}
@@ -22,20 +9,9 @@ export class FeatureExtractor {
   /**
    * Analyzes the prompt to extract complex architectural features, entities with fields, and pages.
    */
-  async extract(promptContext: string): Promise<FeatureExtractionResult> {
+  async extract(promptContext: string): Promise<FeatureArchitecture> {
     const { provider, config } = this.router.getProviderForTask('ARCHITECTURE_DESIGN');
     const orchestrator = new ValidationOrchestrator(provider);
-
-    const schema = z.object({
-      features: z.array(z.string()).describe("Specific functional capabilities"),
-      pages: z.array(z.string()).describe("Required UI views/routes"),
-      entities: z.array(z.object({
-        name: z.string().describe("PascalCase name of the model"),
-        fields: z.array(z.string()).describe("List of data fields (e.g. ['email', 'price'])"),
-        relations: z.array(z.string()).describe("List of related model names")
-      })).describe("Database models and their structure"),
-      workflows: z.array(z.string()).describe("Key business logic flows")
-    });
 
     const result = await orchestrator.executeWithValidation({
       prompt: promptContext,
@@ -60,7 +36,7 @@ You MUST reply with EXACTLY this JSON structure:
 }`,
       schemaName: 'FeatureExtraction',
       modelTier: config.preferredTier,
-      schema
+      schema: FeatureSchema
     }, CRITICAL_RETRY_CONFIG);
 
     if (result.success) return result.data;

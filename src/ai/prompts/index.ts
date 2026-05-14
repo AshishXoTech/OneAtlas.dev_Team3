@@ -1,11 +1,10 @@
-// TODO: Module entry point - Barrel file
-
-export * from './system/understanding.system';
-export * from './system/extraction.system';
-export * from './templates/app-understanding.template';
-export * from './templates/feature-extraction.template';
-export * from './templates/intent-detection.template';
-export * from './chains/understanding.chain';
-export * from './chains/chain.runner';
-export * from './context/context.manager';
-export * from './context/context.types';
+// Prompts Module Entry Point
+export * from './system/understanding.system.js';
+export * from './system/extraction.system.js';
+export * from './templates/app-understanding.template.js';
+export * from './templates/feature-extraction.template.js';
+export * from './templates/intent-detection.template.js';
+export * from './chains/understanding.chain.js';
+export * from './chains/chain.runner.js';
+export * from './context/context.manager.js';
+export * from './context/context.types.js';
