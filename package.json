@@ -17,5 +17,16 @@
     "url": "https://github.com/AshishXoTech/OneAtlas.dev_Team3/issues"
   },
   "homepage": "https://github.com/AshishXoTech/OneAtlas.dev_Team3#readme",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "@prisma/client": "^7.8.0",
+    "@tanstack/react-query": "^5.100.10",
+    "prisma": "^7.8.0",
+    "react-hook-form": "^7.75.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.7.0",
+    "typescript": "^6.0.3"
+  }
 }
