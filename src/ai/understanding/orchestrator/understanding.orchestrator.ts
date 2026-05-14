@@ -5,7 +5,8 @@ import { FeatureExtractor } from '../extractors/feature.extractor.js';
 import { AppTypeExtractor } from '../extractors/apptype.extractor.js';
 import { AppNormalizer } from '../normalizer/app.normalizer.js';
 import { EntityNormalizer } from '../normalizer/entity.normalizer.js';
-import { AppUnderstanding } from '../../validation/schemas/app-understanding.schema.js';
+// Import the SHARED authoritative type — this is what the generation engine consumes
+import { AppUnderstanding, Entity } from '../../shared/types/app-understanding.types.js';
 import { ModelRouter } from '../../gateway/router/model.router.js';
 import { logger } from '../../shared/utils/logger.js';
 import { truncateToTokenLimit, assertPromptSafe } from '../../shared/utils/token.utils.js';
@@ -99,13 +100,35 @@ export class UnderstandingOrchestrator {
     }
 
     // 4. Normalization
+    const normalizedEntityNames = this.entityNormalizer.normalize(architecture.entities);
+
+    /**
+     * CRITICAL BRIDGE: Transform flat entity name strings into Entity objects.
+     *
+     * Our AI extractor returns entity NAMES (e.g. ["User", "Product", "Order"]).
+     * The Generation Engine's entity.generator.ts expects Entity objects with
+     * { name, fields, relations } so it can run field heuristics and build Prisma schemas.
+     *
+     * We provide empty fields[] and relations[] — the generation engine's
+     * field.generator.ts will infer and populate them from the entity name
+     * using its own FIELD_RULES pattern matching + BASE_FIELDS injection.
+     */
+    const entities: Entity[] = normalizedEntityNames.map(name => ({
+      name,
+      fields: [],
+      relations: [],
+    }));
+
     const finalUnderstanding: AppUnderstanding = {
       appName: this.appNormalizer.normalizeName(intentTitle),
       appType,
       features: this.appNormalizer.normalizeFeatures(architecture.features),
       pages: this.appNormalizer.normalizePages(architecture.pages),
-      entities: this.entityNormalizer.normalize(architecture.entities),
-      workflows: this.appNormalizer.normalizeWorkflows(architecture.workflows)
+      entities,
+      workflows: this.appNormalizer.normalizeWorkflows(architecture.workflows),
+      metadata: {
+        rawPrompt: rawPrompt,
+      },
     };
 
     const latencyMs = Date.now() - start;

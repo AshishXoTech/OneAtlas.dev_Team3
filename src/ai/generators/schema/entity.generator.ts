@@ -1,9 +1,9 @@
-import type { AppUnderstanding } from '../../shared/types/app-understanding.types.ts';
+import type { AppUnderstanding } from '../../shared/types/app-understanding.types.js';
 
 import type {
   EntitySchema,
   RelationSchema,
-} from '../../shared/types/generation.types.ts';
+} from '../../shared/types/generation.types.js';
 
 import { generateFields } from './field.generator.js';
 import { generateRelationships } from './relationship.generator.js';

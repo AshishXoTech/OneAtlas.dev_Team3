@@ -18,11 +18,18 @@ export const AppUnderstandingSchema = z.object({
   pages: z.array(z.string())
     .describe("A list of required pages/views to support the features"),
   
-  entities: z.array(z.string())
-    .describe("High-level data entities detected (e.g., 'User', 'Lead', 'Product')"),
+  entities: z.array(z.object({
+    name: z.string(),
+    fields: z.array(z.string()),
+    relations: z.array(z.string())
+  })).describe("Structured database entity objects"),
   
   workflows: z.array(z.string())
-    .describe("Core business logic workflows detected")
+    .describe("Core business logic workflows detected"),
+
+  metadata: z.object({
+    rawPrompt: z.string().optional()
+  }).optional()
 });
 
 export type AppUnderstanding = z.infer<typeof AppUnderstandingSchema>;

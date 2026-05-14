@@ -1,10 +1,10 @@
-import type { Entity } from '../../shared/types/app-understanding.types.ts';
+import type { Entity } from '../../shared/types/app-understanding.types.js';
 
 import type {
   FieldSchema,
   PrismaFieldType,
   UIComponentType,
-} from '../../shared/types/generation.types.ts';
+} from '../../shared/types/generation.types.js';
 
 interface FieldRule {
   patterns: RegExp[];

@@ -29,6 +29,10 @@ class StateStore {
       process.env.UPSTASH_REDIS_REST_TOKEN ?? '';
   }
 
+  private getBaseUrl(): string {
+    return process.env.INTERNAL_API_URL || 'http://localhost:3000';
+  }
+
   private buildKey(
     runId: string,
   ): string {
@@ -84,7 +88,7 @@ class StateStore {
     );
 
     await fetch(
-      '/api/internal/generation-runs',
+      `${this.getBaseUrl()}/api/internal/generation-runs`,
       {
         method: 'POST',
         headers: {
@@ -120,7 +124,7 @@ class StateStore {
     );
 
     await fetch(
-      '/api/internal/generation-runs',
+      `${this.getBaseUrl()}/api/internal/generation-runs`,
       {
         method: 'POST',
         headers: {
