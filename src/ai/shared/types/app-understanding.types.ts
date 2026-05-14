@@ -18,4 +18,7 @@ export interface Entity {
 export interface AppUnderstanding {
   appName: string;
   entities: Entity[];
+  metadata?: {
+    rawPrompt?: string;
+  };
 }
