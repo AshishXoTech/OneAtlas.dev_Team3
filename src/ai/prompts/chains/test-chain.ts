@@ -9,6 +9,7 @@ async function testChain() {
         openaiKey: process.env.OPENAI_API_KEY,
         groqKey: process.env.GROQ_API_KEY,
         geminiKey: process.env.GEMINI_API_KEY,
+        deepseekKey: process.env.DEEPSEEK_API_KEY,
     });
 
     const chain = new UnderstandingChain(router);

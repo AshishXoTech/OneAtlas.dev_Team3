@@ -1,7 +1,6 @@
 /**
  * Configuration and constants for AI models across different providers.
  */
-
 export const MODELS_CONFIG = {
   OPENAI: {
     FAST: 'gpt-4o-mini',
@@ -21,19 +20,19 @@ export const MODELS_CONFIG = {
   // Groq: ultra-low-latency inference via OpenAI-compatible API
   // Update model string if Groq rejects it — see https://console.groq.com/docs/models
   GROQ: {
-    FAST: 'llama-3.1-8b-instant',
-    CAPABLE: 'llama-3.3-70b-versatile',
-    REASONING: 'llama-3.3-70b-versatile'
+    FAST: 'llama-3.3-70b-versatile',
+    CAPABLE: 'openai/gpt-oss-120b',
+    REASONING: 'openai/gpt-oss-120b'
   },
   DEEPSEEK: {
-    FAST: 'deepseek-chat',
-    CAPABLE: 'deepseek-chat',
-    REASONING: 'deepseek-coder'
+    FAST: 'deepseek-v4-flash',
+    CAPABLE: 'deepseek-v4-pro',
+    REASONING: 'deepseek-v4-pro'
   },
   OPENROUTER: {
     FAST: 'google/gemini-2.0-flash-001',
-    CAPABLE: 'anthropic/claude-3.5-sonnet',
-    REASONING: 'openai/gpt-4o-2024-11-20'
+    CAPABLE: 'anthropic/claude-haiku-4.5',
+    REASONING: 'openai/gpt-oss-120b:free'
   }
 } as const;
 
