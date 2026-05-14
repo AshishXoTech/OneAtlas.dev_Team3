@@ -1,0 +1,21 @@
+{
+  "name": "oneatlas.dev_team3",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AshishXoTech/OneAtlas.dev_Team3.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AshishXoTech/OneAtlas.dev_Team3/issues"
+  },
+  "homepage": "https://github.com/AshishXoTech/OneAtlas.dev_Team3#readme",
+  "description": ""
+}
