@@ -1,5 +1,7 @@
 import { execSync } from 'node:child_process';
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 
 import type {
   EntitySchema,
@@ -102,10 +104,14 @@ export const validatePrismaSchema = (
   content: string,
 ): { valid: boolean; error?: string } => {
   try {
-    writeFileSync('/tmp/schema.prisma', content);
+    const tempDir = join(tmpdir(), 'oneatlas');
+    if (!existsSync(tempDir)) mkdirSync(tempDir, { recursive: true });
+    
+    const schemaPath = join(tempDir, 'schema.prisma');
+    writeFileSync(schemaPath, content);
 
     execSync(
-      'npx prisma validate --schema=/tmp/schema.prisma',
+      `npx prisma validate --schema="${schemaPath}"`,
       {
         stdio: 'pipe',
       },

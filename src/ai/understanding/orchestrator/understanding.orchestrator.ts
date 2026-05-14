@@ -100,23 +100,14 @@ export class UnderstandingOrchestrator {
     }
 
     // 4. Normalization
-    const normalizedEntityNames = this.entityNormalizer.normalize(architecture.entities);
-
     /**
-     * CRITICAL BRIDGE: Transform flat entity name strings into Entity objects.
-     *
-     * Our AI extractor returns entity NAMES (e.g. ["User", "Product", "Order"]).
-     * The Generation Engine's entity.generator.ts expects Entity objects with
-     * { name, fields, relations } so it can run field heuristics and build Prisma schemas.
-     *
-     * We provide empty fields[] and relations[] — the generation engine's
-     * field.generator.ts will infer and populate them from the entity name
-     * using its own FIELD_RULES pattern matching + BASE_FIELDS injection.
+     * CRITICAL BRIDGE: Transform AI-extracted entities into standardized Entity objects.
+     * We normalize the names but preserve the fields and relationships suggested by the AI.
      */
-    const entities: Entity[] = normalizedEntityNames.map(name => ({
-      name,
-      fields: [],
-      relations: [],
+    const entities: Entity[] = architecture.entities.map(entity => ({
+      name: this.entityNormalizer.normalize([entity.name])[0] || entity.name,
+      fields: entity.fields,
+      relations: entity.relations,
     }));
 
     const finalUnderstanding: AppUnderstanding = {

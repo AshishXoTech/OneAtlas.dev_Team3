@@ -21,12 +21,13 @@ interface TestResult {
 export async function runStressTests(): Promise<void> {
   const openaiKey = process.env.OPENAI_API_KEY;
   const groqKey = process.env.GROQ_API_KEY;
+  const geminiKey = process.env.GEMINI_API_KEY;
 
-  if (!openaiKey && !groqKey) {
-    throw new Error('At least one of OPENAI_API_KEY or GROQ_API_KEY must be set.');
+  if (!openaiKey && !groqKey && !geminiKey) {
+    throw new Error('At least one of OPENAI_API_KEY, GROQ_API_KEY, or GEMINI_API_KEY must be set.');
   }
 
-  const router = new ModelRouter({ openaiKey, groqKey });
+  const router = new ModelRouter({ openaiKey, groqKey, geminiKey });
   const orchestrator = new UnderstandingOrchestrator(router);
   const results: TestResult[] = [];
 

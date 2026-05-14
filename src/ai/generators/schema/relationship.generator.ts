@@ -1,5 +1,5 @@
-import type { Entity } from '../../shared/types/app-understanding.types.ts';
-import type { RelationSchema } from '../../shared/types/generation.types.ts';
+import type { Entity } from '../../shared/types/app-understanding.types.js';
+import type { RelationSchema } from '../../shared/types/generation.types.js';
 
 const ONE_TO_ONE_SUFFIXES = ['Profile', 'Detail', 'Settings'];
 

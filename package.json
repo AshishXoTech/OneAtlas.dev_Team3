@@ -4,7 +4,10 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:ai": "node src/ai/understanding/tests/understanding.test-runner.js",
+    "build": "tsc",
+    "dev": "tsc --watch"
   },
   "repository": {
     "type": "git",
