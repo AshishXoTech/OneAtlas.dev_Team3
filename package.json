@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "test:ai": "node src/ai/understanding/tests/understanding.test-runner.js",
+    "test:ai": "npx tsx src/ai/understanding/tests/understanding.test-runner.ts",
     "build": "tsc",
     "dev": "tsc --watch"
   },
