@@ -1,3 +1,9 @@
+# Environment variables — never commit secrets
+.env
+.env.local
+.env.*.local
+# .env.example is safe to commit (no real keys)
+
 # Logs
 logs
 *.log

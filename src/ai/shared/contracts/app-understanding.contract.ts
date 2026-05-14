@@ -1,6 +1,28 @@
+import { z } from 'zod';
+
 /**
- * TODO: Define app-understanding.contract structure
+ * CRITICAL BOUNDARY: Contract boundary between Teammate 1 (AI Layer) and Teammate 2 (Generation Engine).
+ * DO NOT modify without cross-team agreement.
  */
-export interface AppUnderstandingContract {
-  // Add properties here
-}
+
+export const AppUnderstandingSchema = z.object({
+  appName: z.string()
+    .describe("The normalized, human-readable name of the application"),
+  
+  appType: z.enum(["dashboard", "e-commerce", "social", "productivity", "internal-tool", "other"])
+    .describe("The core archetype of the application"),
+  
+  features: z.array(z.string())
+    .describe("A list of core features extracted from the user's prompt"),
+  
+  pages: z.array(z.string())
+    .describe("A list of required pages/views to support the features"),
+  
+  entities: z.array(z.string())
+    .describe("High-level data entities detected (e.g., 'User', 'Lead', 'Product')"),
+  
+  workflows: z.array(z.string())
+    .describe("Core business logic workflows detected")
+});
+
+export type AppUnderstanding = z.infer<typeof AppUnderstandingSchema>;

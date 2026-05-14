@@ -17,5 +17,13 @@
     "url": "https://github.com/AshishXoTech/OneAtlas.dev_Team3/issues"
   },
   "homepage": "https://github.com/AshishXoTech/OneAtlas.dev_Team3#readme",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "openai": "^6.37.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.7.0"
+  }
 }
