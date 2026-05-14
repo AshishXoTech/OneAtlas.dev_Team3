@@ -43,6 +43,11 @@ class StateStore {
     key: string,
     value: unknown,
   ): Promise<void> {
+    if (!this.redisUrl || !this.redisToken) {
+      console.warn(`[StateStore] Redis unconfigured. Skipping write for key: ${key}`);
+      return;
+    }
+
     await fetch(
       `${this.redisUrl}/set/${key}`,
       {

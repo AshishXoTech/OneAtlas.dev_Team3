@@ -221,6 +221,11 @@ export const PIPELINE_STEPS: PipelineStep[] = [
     stage: 'deployment_handoff',
     name: 'Deployment Handoff',
     run: async (context) => {
+      if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+        console.error('[Pipeline] Redis unconfigured. Cannot perform deployment handoff.');
+        return context;
+      }
+
       await fetch(
         `${
           process.env.UPSTASH_REDIS_REST_URL
