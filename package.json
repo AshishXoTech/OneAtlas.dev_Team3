@@ -22,6 +22,7 @@
   "homepage": "https://github.com/AshishXoTech/OneAtlas.dev_Team3#readme",
   "description": "",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.96.0",
     "@google/genai": "^2.2.0",
     "@prisma/client": "^7.8.0",
     "@tanstack/react-query": "^5.100.10",

@@ -2,6 +2,7 @@ import { GoogleGenAI, Type } from '@google/genai';
 import { BaseProvider } from './base.provider.js';
 import { ProviderConfig, AIRequest, AIResponse } from '../types/gateway.types.js';
 import { MODELS_CONFIG } from '../config/models.config.js';
+import { PROVIDER_CONFIG } from '../config/provider.config.js';
 
 /**
  * Gemini Provider using the official @google/genai SDK.

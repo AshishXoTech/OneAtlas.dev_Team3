@@ -10,7 +10,7 @@ export const MODELS_CONFIG = {
   },
   ANTHROPIC: {
     FAST: 'claude-3-haiku-20240307',
-    CAPABLE: 'claude-3-5-sonnet-20240620',
+    CAPABLE: 'claude-3-5-sonnet-20241022',
     REASONING: 'claude-3-opus-20240229'
   },
   GEMINI: {
@@ -21,9 +21,19 @@ export const MODELS_CONFIG = {
   // Groq: ultra-low-latency inference via OpenAI-compatible API
   // Update model string if Groq rejects it — see https://console.groq.com/docs/models
   GROQ: {
-    FAST: 'openai/gpt-oss-120b',
-    CAPABLE: 'openai/gpt-oss-120b',
-    REASONING: 'openai/gpt-oss-120b'
+    FAST: 'llama-3.1-8b-instant',
+    CAPABLE: 'llama-3.3-70b-versatile',
+    REASONING: 'llama-3.3-70b-versatile'
+  },
+  DEEPSEEK: {
+    FAST: 'deepseek-chat',
+    CAPABLE: 'deepseek-chat',
+    REASONING: 'deepseek-coder'
+  },
+  OPENROUTER: {
+    FAST: 'google/gemini-2.0-flash-001',
+    CAPABLE: 'anthropic/claude-3.5-sonnet',
+    REASONING: 'openai/gpt-4o-2024-11-20'
   }
 } as const;
 

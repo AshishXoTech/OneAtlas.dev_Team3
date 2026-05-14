@@ -2,13 +2,16 @@ import { BaseProvider } from '../providers/base.provider.js';
 import { OpenAIProvider } from '../providers/openai.provider.js';
 import { GroqProvider } from '../providers/groq.provider.js';
 import { GeminiProvider } from '../providers/gemini.provider.js';
+import { ClaudeProvider } from '../providers/claude.provider.js';
+import { DeepSeekProvider } from '../providers/deepseek.provider.js';
+import { OpenRouterProvider } from '../providers/openrouter.provider.js';
 import { ROUTING_CONFIG, RouteConfig } from './routing.config.js';
 import { ProviderName } from '../config/models.config.js';
 
 export class ModelRouter {
   private providers: Map<ProviderName, BaseProvider> = new Map();
 
-  constructor(keys: { openaiKey?: string; anthropicKey?: string; geminiKey?: string; groqKey?: string }) {
+  constructor(keys: { openaiKey?: string; anthropicKey?: string; geminiKey?: string; groqKey?: string; deepseekKey?: string; openrouterKey?: string }) {
     if (keys.openaiKey) {
       this.providers.set('OPENAI', new OpenAIProvider({ apiKey: keys.openaiKey }));
     }
@@ -18,8 +21,15 @@ export class ModelRouter {
     if (keys.geminiKey) {
       this.providers.set('GEMINI', new GeminiProvider({ apiKey: keys.geminiKey }));
     }
-    // Future integrations:
-    // if (keys.anthropicKey) this.providers.set('ANTHROPIC', new AnthropicProvider(...));
+    if (keys.anthropicKey) {
+      this.providers.set('ANTHROPIC', new ClaudeProvider({ apiKey: keys.anthropicKey }));
+    }
+    if (keys.deepseekKey) {
+      this.providers.set('DEEPSEEK', new DeepSeekProvider({ apiKey: keys.deepseekKey }));
+    }
+    if (keys.openrouterKey) {
+      this.providers.set('OPENROUTER', new OpenRouterProvider({ apiKey: keys.openrouterKey }));
+    }
   }
 
   /**

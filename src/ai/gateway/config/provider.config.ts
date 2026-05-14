@@ -20,5 +20,15 @@ export const PROVIDER_CONFIG = {
     BASE_URL: 'https://api.groq.com/openai/v1',
     TIMEOUT_MS: 15000,
     MAX_RETRIES: 3,
+  },
+  DEEPSEEK: {
+    BASE_URL: 'https://api.deepseek.com',
+    TIMEOUT_MS: 30000,
+    MAX_RETRIES: 3,
+  },
+  OPENROUTER: {
+    BASE_URL: 'https://openrouter.ai/api/v1',
+    TIMEOUT_MS: 30000,
+    MAX_RETRIES: 3,
   }
 } as const;
