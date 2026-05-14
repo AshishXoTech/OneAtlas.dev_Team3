@@ -1,6 +1,7 @@
 import { BaseProvider } from '../providers/base.provider.js';
 import { OpenAIProvider } from '../providers/openai.provider.js';
 import { GroqProvider } from '../providers/groq.provider.js';
+import { GeminiProvider } from '../providers/gemini.provider.js';
 import { ROUTING_CONFIG, RouteConfig } from './routing.config.js';
 import { ProviderName } from '../config/models.config.js';
 
@@ -14,9 +15,11 @@ export class ModelRouter {
     if (keys.groqKey) {
       this.providers.set('GROQ', new GroqProvider({ apiKey: keys.groqKey }));
     }
+    if (keys.geminiKey) {
+      this.providers.set('GEMINI', new GeminiProvider({ apiKey: keys.geminiKey }));
+    }
     // Future integrations:
     // if (keys.anthropicKey) this.providers.set('ANTHROPIC', new AnthropicProvider(...));
-    // if (keys.geminiKey) this.providers.set('GEMINI', new GeminiProvider(...));
   }
 
   /**

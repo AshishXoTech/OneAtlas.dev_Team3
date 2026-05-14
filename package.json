@@ -19,6 +19,7 @@
   "homepage": "https://github.com/AshishXoTech/OneAtlas.dev_Team3#readme",
   "description": "",
   "dependencies": {
+    "@google/genai": "^2.2.0",
     "dotenv": "^17.4.2",
     "openai": "^6.37.0",
     "zod": "^4.4.3"
