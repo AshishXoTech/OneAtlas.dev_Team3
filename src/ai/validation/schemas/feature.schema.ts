@@ -34,8 +34,10 @@ export const FeatureSchema = z.object({
   workflows: z.array(z.object({
     id: z.string().describe("Unique identifier for the workflow"),
     name: z.string().describe("Name of the workflow"),
-    trigger: z.string().describe("What triggers this workflow (e.g. user_action, system_event)"),
-    description: z.string().describe("Detailed business logic flow")
+    description: z.string().describe("Detailed business logic flow"),
+    triggerType: z.enum(['USER_ACTION', 'SYSTEM_EVENT', 'SCHEDULED']).describe("What initiates this workflow"),
+    executionMode: z.enum(['SYNC', 'ASYNC']).describe("Whether it blocks response (SYNC) or runs in background (ASYNC)"),
+    steps: z.array(z.string()).min(1).describe("Ordered list of execution steps")
   })).describe("Key business logic flows")
 });
 

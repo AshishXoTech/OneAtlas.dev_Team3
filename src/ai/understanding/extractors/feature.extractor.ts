@@ -23,7 +23,7 @@ CRITICAL FORMAT RULES:
 - "features": capabilities with id, name, and description.
 - "pages": routes with id, name, route, description, requiredEntities, and layoutTemplate.
 - "entities": detailed data models with id, name, description, attributes (name, type, isRequired), and relations (targetEntity, type).
-- "workflows": business flows with id, name, trigger, and description.
+- "workflows": business flows with id, name, description, triggerType (USER_ACTION, SYSTEM_EVENT, SCHEDULED), executionMode (SYNC, ASYNC), and a steps array.
 
 You MUST reply with EXACTLY this JSON structure:
 {
@@ -43,7 +43,14 @@ You MUST reply with EXACTLY this JSON structure:
     }
   ],
   "workflows": [
-    { "id": "wf_1", "name": "Order Checkout", "trigger": "user_action", "description": "Processes payment and creates order" }
+    { 
+      "id": "wf_1", 
+      "name": "Order Checkout", 
+      "description": "Processes payment and creates order",
+      "triggerType": "USER_ACTION",
+      "executionMode": "SYNC",
+      "steps": ["Validate Cart", "Process Stripe Payment", "Create Order Record", "Dispatch Email Event"]
+    }
   ]
 }`,
       schemaName: 'FeatureExtraction',

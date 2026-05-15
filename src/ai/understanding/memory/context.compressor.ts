@@ -13,7 +13,7 @@ export type CompressedAppUnderstanding = Omit<AppUnderstanding, 'features' | 'pa
     attributes: { name: string; type: string }[];
     relations: { targetEntity: string; type: string }[];
   }[];
-  workflows: { id: string; name: string; trigger: string }[];
+  workflows: { id: string; name: string; triggerType: string; executionMode: string; steps: string[] }[];
 };
 
 export class ContextCompressor {
@@ -43,7 +43,9 @@ export class ContextCompressor {
       workflows: spec.workflows.map(w => ({
         id: w.id,
         name: w.name,
-        trigger: w.trigger
+        triggerType: w.triggerType,
+        executionMode: w.executionMode,
+        steps: w.steps
       }))
     };
   }

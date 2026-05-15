@@ -35,6 +35,19 @@ export class AppNormalizer {
       const name = w.name.trim().toLowerCase();
       if (seen.has(name)) return false;
       seen.add(name);
+      
+      // Ensure enums are valid (fallback to generic if LLM hallucinates)
+      const validTriggers = ['USER_ACTION', 'SYSTEM_EVENT', 'SCHEDULED'];
+      if (!validTriggers.includes(w.triggerType)) w.triggerType = 'USER_ACTION';
+      
+      const validModes = ['SYNC', 'ASYNC'];
+      if (!validModes.includes(w.executionMode)) w.executionMode = 'SYNC';
+      
+      // Ensure steps is always an array
+      if (!w.steps || !Array.isArray(w.steps)) {
+        w.steps = ["Execute Workflow"];
+      }
+      
       return true;
     });
   }

@@ -6,7 +6,7 @@ import { logger } from '../../shared/utils/logger.js';
 
 const MOCK_BASE_APP: AppUnderstanding = {
   appName: 'Base CRM',
-  appType: 'crm',
+  appType: 'internal-tool',
   features: [
     { id: 'feat_1', name: 'Lead Management', description: 'Manage sales leads' }
   ],
@@ -23,7 +23,7 @@ const MOCK_BASE_APP: AppUnderstanding = {
     }
   ],
   workflows: [
-    { id: 'wf_1', name: 'Create Lead', trigger: 'user_action', description: 'User submits a new lead' }
+    { id: 'wf_1', name: 'Create Lead', description: 'User submits a new lead', triggerType: 'USER_ACTION', executionMode: 'SYNC', steps: ['Submit lead form', 'Save to DB'] }
   ]
 };
 

@@ -43,8 +43,10 @@ export interface EntityNode {
 export interface WorkflowNode {
   id: string;
   name: string;
-  trigger: string;
   description: string;
+  triggerType: 'USER_ACTION' | 'SYSTEM_EVENT' | 'SCHEDULED';
+  executionMode: 'SYNC' | 'ASYNC';
+  steps: string[];
 }
 
 export interface AppUnderstanding {
