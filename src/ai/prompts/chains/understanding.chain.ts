@@ -3,6 +3,8 @@ import { ModelRouter } from '../../gateway/router/model.router.js';
 import { ValidationOrchestrator } from '../../validation/orchestrator/validation.orchestrator.js';
 import { AIRequest } from '../../gateway/types/gateway.types.js';
 import { AppUnderstandingSchema, AppUnderstanding } from '../../validation/schemas/app-understanding.schema.js';
+import { AppUnderstandingExtractionSchema } from '../../validation/schemas/app-understanding.extraction.schema.js';
+import { normalizeUnderstanding } from '../../validation/schemas/app-understanding.normalizer.js';
 import { UNDERSTANDING_SYSTEM_PROMPT } from '../system/understanding.system.js';
 
 /**
@@ -33,12 +35,15 @@ export class UnderstandingChain {
           // 2. Wrap provider in our iron-clad Validation Reliability Pipeline
           const orchestrator = new ValidationOrchestrator(provider);
 
-          const request: AIRequest<AppUnderstanding> = {
+          const request: AIRequest<AppUnderstanding, any> = {
             prompt: ctx.userPrompt,
             systemPrompt: UNDERSTANDING_SYSTEM_PROMPT,
             modelTier: config.preferredTier, // e.g., 'CAPABLE' (GPT-4o)
             schema: AppUnderstandingSchema,
-            schemaName: 'AppUnderstanding'
+            extractionSchema: AppUnderstandingExtractionSchema,
+            normalizer: normalizeUnderstanding,
+            schemaName: 'AppUnderstanding',
+            maxTokens: 3000
           };
 
           // 3. Execute with retries, recovery, and strict validation

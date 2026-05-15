@@ -14,29 +14,28 @@ export interface RouteConfig {
  */
 export const ROUTING_CONFIG: Record<string, RouteConfig> = {
   RECOVERY: {
-    primaryProvider: 'GROQ',       // Groq's speed makes it ideal for repair retries
-    fallbackProviders: ['OPENAI'],
+    primaryProvider: 'GROQ',
+    fallbackProviders: ['OPENROUTER'],
     preferredTier: 'FAST',
   },
   INTENT_EXTRACTION: {
-    primaryProvider: 'GROQ',       // Lightweight task — Groq wins on latency
-    fallbackProviders: ['OPENAI'],
+    primaryProvider: 'GROQ',
+    fallbackProviders: ['OPENROUTER'],
     preferredTier: 'FAST',
   },
   ARCHITECTURE_DESIGN: {
-    primaryProvider: 'OPENAI',     // Deep reasoning still benefits from GPT-4o
-    fallbackProviders: ['GROQ'],
+    primaryProvider: 'GROQ',
+    fallbackProviders: ['OPENROUTER'],
     preferredTier: 'CAPABLE',
   },
-  // Direct Groq routing slot for any task that explicitly needs it
   GROQ_FAST: {
     primaryProvider: 'GROQ',
-    fallbackProviders: ['OPENAI'],
+    fallbackProviders: ['OPENROUTER'],
     preferredTier: 'FAST',
   },
   DEFAULT: {
-    primaryProvider: 'OPENAI',
-    fallbackProviders: ['GROQ'],
+    primaryProvider: 'GROQ',
+    fallbackProviders: ['OPENROUTER'],
     preferredTier: 'CAPABLE',
   }
 };

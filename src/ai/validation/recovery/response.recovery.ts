@@ -14,12 +14,12 @@ export class ResponseRecovery {
    * Triggers a recovery pipeline utilizing a fast, cheap AI model to auto-repair
    * malformed JSON outputs based on the exact Zod validation error.
    */
-  async attemptRepair<T>(
+  async attemptRepair<T, E>(
     malformedContent: string,
     validationError: Error | z.ZodError,
-    schema: z.ZodSchema<T>,
-    schemaName: string = 'repaired_response'
+    request: AIRequest<T, E>
   ): Promise<{ success: boolean; data?: T; error?: any }> {
+    const schemaName = request.schemaName || 'repaired_response';
     console.log(`[ResponseRecovery] Triggering repair pipeline for schema: ${schemaName}`);
 
     const systemPrompt = `You are a strict, highly accurate JSON structural repair engine.
@@ -40,32 +40,40 @@ ${errorMessage}
 
 Please repair the payload so it passes validation.`;
 
-    const request: AIRequest<T> = {
+    // The secondary request to the FAST model
+    const repairRequest: AIRequest<any> = {
       prompt: userPrompt,
       systemPrompt,
-      modelTier: 'FAST', // Strongly enforcing FAST tier for recovery (e.g. gpt-4o-mini)
-      temperature: 0.1, // Highly deterministic to prevent further errors
-      schema,
+      modelTier: 'FAST', // Strongly enforcing FAST tier for recovery
+      temperature: 0.1, // Highly deterministic
+      schema: request.extractionSchema || request.schema,
       schemaName
     };
 
     try {
-      // The secondary request to the FAST model
-      const response: AIResponse<T> = await this.provider.generate(request);
+      const response = await this.provider.generate(repairRequest);
 
       if (!response.content) {
         return { success: false, error: "Repair provider returned empty content." };
       }
 
-      // Parse and validate the repaired content through the schema directly.
-      // We cannot rely on response.parsedOutput because non-OpenAI providers 
-      // (e.g. GroqProvider) intentionally return parsedOutput: undefined.
       try {
         const cleanedContent = OutputFormatter.format(response.content);
         const repairedJson = JSON.parse(cleanedContent);
-        const validated = schema.parse(repairedJson);
+        
+        let validatedOutput: T;
+        if (request.extractionSchema && request.normalizer) {
+          const extracted = request.extractionSchema.parse(repairedJson);
+          const normalized = request.normalizer(extracted);
+          if (!request.schema) throw new Error("Missing runtime schema.");
+          validatedOutput = request.schema.parse(normalized);
+        } else {
+          if (!request.schema) throw new Error("Missing runtime schema.");
+          validatedOutput = request.schema.parse(repairedJson);
+        }
+
         console.log(`[ResponseRecovery] Successfully repaired and validated JSON for: ${schemaName}`);
-        return { success: true, data: validated };
+        return { success: true, data: validatedOutput };
       } catch (parseError) {
         return { success: false, error: `Repaired content still failed validation: ${parseError instanceof Error ? parseError.message : String(parseError)}` };
       }

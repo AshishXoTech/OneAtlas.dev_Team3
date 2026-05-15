@@ -7,13 +7,15 @@ export interface ProviderConfig {
   timeoutMs?: number;
 }
 
-export interface AIRequest<T = any> {
+export interface AIRequest<T = any, E = any> {
   prompt: string;
   systemPrompt?: string;
   modelTier?: ModelTier;
   temperature?: number;
   maxTokens?: number;
   schema?: z.ZodSchema<T>;
+  extractionSchema?: z.ZodSchema<E>;
+  normalizer?: (extracted: E) => any;
   schemaName?: string;
   schemaDescription?: string;
 }

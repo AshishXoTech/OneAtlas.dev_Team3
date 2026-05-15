@@ -55,7 +55,20 @@ export class ValidationOrchestrator {
         try {
           const cleanedContent = OutputFormatter.format(response.content);
           const rawJson = JSON.parse(cleanedContent);
-          const validatedOutput = request.schema.parse(rawJson);
+          
+          let validatedOutput: T;
+          if (request.extractionSchema && request.normalizer) {
+            // New Architecture: Permissive Extraction -> Normalization -> Strict Validation
+            const extracted = request.extractionSchema.parse(rawJson);
+            const normalized = request.normalizer(extracted);
+            if (!request.schema) throw new Error("Missing runtime schema.");
+            validatedOutput = request.schema.parse(normalized);
+          } else {
+            // Legacy Architecture: Strict Validation directly
+            if (!request.schema) throw new Error("Missing runtime schema.");
+            validatedOutput = request.schema.parse(rawJson);
+          }
+
           return { success: true, data: validatedOutput };
         } catch (validationError) {
           
@@ -68,11 +81,10 @@ export class ValidationOrchestrator {
           console.warn(`[ValidationOrchestrator] Schema validation or JSON parse failed. Engaging Recovery Pipeline.`);
           
           // Step 3: Trigger Auto-Repair Pipeline if parsing/validation fails
-          const recoveryResult = await this.recovery.attemptRepair<T>(
+          const recoveryResult = await this.recovery.attemptRepair(
             response.content,
             validationError instanceof Error ? validationError : new Error('Unknown parsing error'),
-            request.schema,
-            request.schemaName
+            request
           );
 
           if (recoveryResult.success && recoveryResult.data) {

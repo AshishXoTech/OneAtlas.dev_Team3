@@ -24,12 +24,13 @@ export async function runStressTests(): Promise<void> {
   const geminiKey = process.env.GEMINI_API_KEY;
   const deepseekKey = process.env.DEEPSEEK_API_KEY;
   const openrouterKey = process.env.OPENROUTER_API_KEY;
+  const mistralKey = process.env.MISTRAL_API_KEY;
 
-  if (!openaiKey && !groqKey && !geminiKey && !deepseekKey && !openrouterKey) {
-    throw new Error('At least one of OPENAI_API_KEY, GROQ_API_KEY, GEMINI_API_KEY, DEEPSEEK_API_KEY, or OPENROUTER_API_KEY must be set.');
+  if (!openaiKey && !groqKey && !geminiKey && !deepseekKey && !openrouterKey && !mistralKey) {
+    throw new Error('At least one API Key must be set.');
   }
 
-  const router = new ModelRouter({ openaiKey, groqKey, geminiKey, deepseekKey, openrouterKey });
+  const router = new ModelRouter({ openaiKey, groqKey, geminiKey, deepseekKey, openrouterKey, mistralKey });
   const orchestrator = new UnderstandingOrchestrator(router);
   const results: TestResult[] = [];
 

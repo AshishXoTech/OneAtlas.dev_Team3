@@ -5,13 +5,14 @@ import { GeminiProvider } from '../providers/gemini.provider.js';
 import { ClaudeProvider } from '../providers/claude.provider.js';
 import { DeepSeekProvider } from '../providers/deepseek.provider.js';
 import { OpenRouterProvider } from '../providers/openrouter.provider.js';
+import { MistralProvider } from '../providers/mistral.provider.js';
 import { ROUTING_CONFIG, RouteConfig } from './routing.config.js';
 import { ProviderName } from '../config/models.config.js';
 
 export class ModelRouter {
   private providers: Map<ProviderName, BaseProvider> = new Map();
 
-  constructor(keys: { openaiKey?: string; anthropicKey?: string; geminiKey?: string; groqKey?: string; deepseekKey?: string; openrouterKey?: string }) {
+  constructor(keys: { openaiKey?: string; anthropicKey?: string; geminiKey?: string; groqKey?: string; deepseekKey?: string; openrouterKey?: string; mistralKey?: string }) {
     if (keys.openaiKey) {
       this.providers.set('OPENAI', new OpenAIProvider({ apiKey: keys.openaiKey }));
     }
@@ -29,6 +30,9 @@ export class ModelRouter {
     }
     if (keys.openrouterKey) {
       this.providers.set('OPENROUTER', new OpenRouterProvider({ apiKey: keys.openrouterKey }));
+    }
+    if (keys.mistralKey) {
+      this.providers.set('MISTRAL', new MistralProvider({ apiKey: keys.mistralKey }));
     }
   }
 

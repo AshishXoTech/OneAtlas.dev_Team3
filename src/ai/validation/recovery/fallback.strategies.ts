@@ -25,26 +25,26 @@ export const FAST_RETRY_CONFIG: RetryConfig = {
 
 /**
  * Standard config for medium tasks.
- * Allows 1 retry and attempts LLM recovery. 15s timeout.
+ * Allows 1 retry and attempts LLM recovery. 45s timeout.
  */
 export const STANDARD_RETRY_CONFIG: RetryConfig = {
   maxAttempts: 2,
   baseDelayMs: 1000,
   maxDelayMs: 5000,
-  timeoutMs: 15000,
+  timeoutMs: 45000,
   enableRecovery: true,
 };
 
 /**
  * Heavy architectural extraction config.
- * Allows 2 retries, full LLM recovery. 15s hard timeout.
- * Reduced from 3/45s — even complex extraction completes in <10s on Groq.
+ * Allows 2 retries, full LLM recovery. 45s hard timeout.
+ * Required for Mistral Large.
  */
 export const CRITICAL_RETRY_CONFIG: RetryConfig = {
   maxAttempts: 2,
   baseDelayMs: 1000,
   maxDelayMs: 5000,
-  timeoutMs: 15000, 
+  timeoutMs: 45000, 
   enableRecovery: true,
 };
 
