@@ -62,7 +62,7 @@ export class AppNormalizer {
       let isDuplicate = false;
 
       for (const [canonicalId, existing] of deduplicated.entries()) {
-        const existingName = existing.name.toLowerCase();
+        const existingName = this.normalizeName(existing.name).toLowerCase();
         // Simple heuristic: If names match, or one is a subset of another (e.g. User vs UserProfile)
         // AND they share at least one attribute name, merge them.
         if (normalizedName === existingName || normalizedName.includes(existingName) || existingName.includes(normalizedName)) {

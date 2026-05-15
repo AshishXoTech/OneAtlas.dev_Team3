@@ -21,9 +21,9 @@ export class PromptGuard {
     /ignore\s+(all\s+)?(previous|prior|above)\s+instructions?/i,
     /disregard\s+(all\s+)?(previous|prior|above)\s+instructions?/i,
     /forget\s+(all\s+)?(previous|prior|above)\s+(instructions?|context|rules?)/i,
-    /you\s+are\s+now\s+(a\s+)?(?!an?\s+app)/i,  // "You are now a..." but not "You are now an app"
-    /act\s+as\s+(if\s+you\s+are\s+)?(a\s+)?(?!an?\s+(app|platform|tool))/i,
-    /pretend\s+(you\s+are|to\s+be)\s+/i,
+    /you\s+are\s+now\s+(a\s+)?(?!an?\s+app)/i,  // Still useful but let's watch for false positives
+    /act\s+as\s+(if\s+you\s+are\s+)?(a\s+)?(?!an?\s+(app|platform|tool|builder|assistant))/i, // Added builder/assistant to allowed roles
+    /pretend\s+(you\s+are|to\s+be)\s+(?!an?\s+(app|builder|assistant|platform))/i, // Added lookahead to allow legitimate role-play
     /bypass\s+(all\s+)?(safety|security|guardrail|filter)/i,
     /reveal\s+(your\s+)?(system\s+prompt|instructions?|internal\s+prompt)/i,
     /print\s+(your\s+)?(system\s+prompt|instructions?)/i,
