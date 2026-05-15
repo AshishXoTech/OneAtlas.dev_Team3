@@ -22,11 +22,8 @@ export class ResponseRecovery {
     const schemaName = request.schemaName || 'repaired_response';
     console.log(`[ResponseRecovery] Triggering repair pipeline for schema: ${schemaName}`);
 
-    const systemPrompt = `You are a strict, highly accurate JSON structural repair engine.
-Your job is to fix the exact validation or semantic errors in the provided JSON payload.
-You MUST return the FULL repaired JSON payload. Do NOT just return a partial patch.
-Do NOT hallucinate new data. Preserve the intent of the original data, but modify relations or fields as needed to satisfy the schema or remove cyclical logic. 
-Do NOT output markdown. Return raw JSON only.`;
+    const systemPrompt = `Strict JSON repair engine. Fix validation/semantic errors. 
+Return FULL repaired JSON payload only. No markdown. No hallucinations.`;
 
     let errorMessage = '';
     let repairInstructions = '';

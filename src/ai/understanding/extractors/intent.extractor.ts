@@ -17,12 +17,8 @@ export class IntentExtractor {
     // Intent is lightweight metadata. Fail fast and fallback cleanly if needed.
     const result = await orchestrator.executeWithValidation({
       prompt,
-      systemPrompt: `You are an app classification engine. Extract the primary name/title of the software application the user wants to build.
-
-IMPORTANT: You MUST reply with this EXACT JSON format — nothing else:
-{"primaryIntent": "App Name Here"}
-
-The value must be a plain string of 3-7 words. Do NOT nest objects. Do NOT add extra keys.`,
+      systemPrompt: `App classification engine. Extract the primary name/title of the software application.
+Reply ONLY with EXACT JSON: {"primaryIntent": "App Name Here"} (3-7 words).`,
       schemaName: 'IntentExtraction',
       modelTier: config.preferredTier,
       schema: IntentSchema

@@ -12,6 +12,7 @@ import { ModelRouter } from '../../gateway/router/model.router.js';
 import { logger } from '../../shared/utils/logger.js';
 import { truncateToTokenLimit, assertPromptSafe } from '../../shared/utils/token.utils.js';
 import { ConfidenceScore, CONFIDENCE_THRESHOLD } from '../../shared/types/common.types.js';
+import { tracer } from '../../shared/utils/intelligence_trace.js';
 
 export interface UnderstandingResult {
   data: AppUnderstanding;
@@ -37,13 +38,20 @@ export class UnderstandingOrchestrator {
 
   async process(rawPrompt: string): Promise<UnderstandingResult> {
     const start = Date.now();
+    tracer.reset();
+
     logger.info('UnderstandingOrchestrator', 'PIPELINE_START', 'Starting modular extraction pipeline.', {
       promptLength: rawPrompt.length
     });
 
     // === SECURITY: Adversarial Prompt Defense (Phase 7) ===
     // Synchronous, zero-cost heuristic guard. Must pass before ANY AI calls are made.
-    PromptGuard.validate(rawPrompt);
+    try {
+      PromptGuard.validate(rawPrompt);
+    } catch (guardError) {
+      tracer.recordSecurityTrigger('PromptGuard');
+      throw guardError;
+    }
 
     // === EDGE CASE: Empty / trivially short prompt ===
     if (!rawPrompt || rawPrompt.trim().length < 5) {
@@ -92,10 +100,16 @@ export class UnderstandingOrchestrator {
     }
 
     // 3. Parallel AI Extraction with observability
+    const { ARCHETYPE_BASELINES } = await import('./archetypes.js');
+    const baseline = ARCHETYPE_BASELINES[appType.toLowerCase()];
+    const baselineContext = baseline 
+      ? `BASELINE ARCHETYPE: ${JSON.stringify(baseline)}. Use this as a starting point and extend it based on the user's request. Output the FULL graph.`
+      : '';
+
     const [intentTitle, architecture] = await logger.trace('Extractors', 'PARALLEL_EXTRACT',
       () => Promise.all([
         this.intentExtractor.extract(parsed.original),
-        this.featureExtractor.extract(`Intent: ${parsed.original}. Category Scope: ${appType}.`)
+        this.featureExtractor.extract(`Intent: ${parsed.original}. Category Scope: ${appType}. ${baselineContext}`)
       ])
     );
 
@@ -141,7 +155,8 @@ export class UnderstandingOrchestrator {
       latencyMs,
       confidence: confidence.score
     });
-
+    
+    tracer.emitTrace();
     return { data: finalUnderstanding, confidence, latencyMs };
   }
 }

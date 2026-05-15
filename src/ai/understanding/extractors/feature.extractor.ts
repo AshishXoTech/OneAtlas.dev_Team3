@@ -15,43 +15,20 @@ export class FeatureExtractor {
 
     const result = await orchestrator.executeWithValidation({
       prompt: promptContext,
-      systemPrompt: `You are a software architecture extraction engine.
+      systemPrompt: `Software architecture engine. Extract core features, UI pages, database entities, and workflows.
 
-Extract the core features, UI pages, database entities (with attributes and relations), and workflows from the user's app idea.
+RULES:
+- Features: id, name, description.
+- Pages: id, name, route, description, requiredEntities, layoutTemplate.
+- Entities: id, name, description, attributes (name, type, isRequired), relations (targetEntity, type).
+- Workflows: id, name, description, triggerType (USER_ACTION/SYSTEM_EVENT/SCHEDULED), executionMode (SYNC/ASYNC), steps[].
 
-CRITICAL FORMAT RULES:
-- "features": capabilities with id, name, and description.
-- "pages": routes with id, name, route, description, requiredEntities, and layoutTemplate.
-- "entities": detailed data models with id, name, description, attributes (name, type, isRequired), and relations (targetEntity, type).
-- "workflows": business flows with id, name, description, triggerType (USER_ACTION, SYSTEM_EVENT, SCHEDULED), executionMode (SYNC, ASYNC), and a steps array.
-
-You MUST reply with EXACTLY this JSON structure:
+JSON FORMAT:
 {
-  "features": [
-    { "id": "feat_1", "name": "User Authentication", "description": "Handles login and registration" }
-  ],
-  "pages": [
-    { "id": "page_1", "name": "Dashboard", "route": "/dashboard", "description": "Main user view", "requiredEntities": ["ent_1"], "layoutTemplate": "dashboard" }
-  ],
-  "entities": [
-    { 
-      "id": "ent_1", 
-      "name": "User", 
-      "description": "System user",
-      "attributes": [{ "name": "email", "type": "string", "isRequired": true }],
-      "relations": [{ "targetEntity": "ent_2", "type": "one-to-many" }]
-    }
-  ],
-  "workflows": [
-    { 
-      "id": "wf_1", 
-      "name": "Order Checkout", 
-      "description": "Processes payment and creates order",
-      "triggerType": "USER_ACTION",
-      "executionMode": "SYNC",
-      "steps": ["Validate Cart", "Process Stripe Payment", "Create Order Record", "Dispatch Email Event"]
-    }
-  ]
+  "features": [{ "id": "feat_1", "name": "Auth", "description": "Login/Reg" }],
+  "pages": [{ "id": "p1", "name": "Home", "route": "/", "description": "Landing", "requiredEntities": [], "layoutTemplate": "hero" }],
+  "entities": [{ "id": "e1", "name": "User", "description": "System user", "attributes": [{"name":"email","type":"string","isRequired":true}], "relations": [] }],
+  "workflows": [{ "id": "w1", "name": "Submit", "description": "Form", "triggerType": "USER_ACTION", "executionMode": "SYNC", "steps": ["Step 1"] }]
 }`,
       schemaName: 'FeatureExtraction',
       modelTier: config.preferredTier,

@@ -4,6 +4,7 @@ import { ResponseRecovery } from '../recovery/response.recovery.js';
 import { OutputFormatter } from '../formatters/output.formatter.js';
 import { calculateBackoff, delay, withTimeout, RetryConfig, DEFAULT_RETRY_CONFIG } from '../recovery/fallback.strategies.js';
 import { AIRequest, AIResponse } from '../../gateway/types/gateway.types.js';
+import { tracer } from '../../shared/utils/intelligence_trace.js';
 
 export type OrchestrationResult<T> = 
   | { success: true; data: T }
@@ -37,6 +38,7 @@ export class ValidationOrchestrator {
     let lastError: any = null;
 
     while (attempt <= retryConfig.maxAttempts) {
+      const attemptStart = Date.now();
       try {
         console.log(`[ValidationOrchestrator] Executing request '${request.schemaName}' (Attempt ${attempt}/${retryConfig.maxAttempts})`);
         
@@ -80,12 +82,35 @@ export class ValidationOrchestrator {
             throw graphError; // Unexpected error
           }
 
+          // Record successful span
+          tracer.recordSpan({
+            id: request.schemaName || 'unknown',
+            tokensIn: response.usage.promptTokens,
+            tokensOut: response.usage.completionTokens,
+            latencyMs: Date.now() - attemptStart,
+            success: true,
+            retries: attempt - 1,
+            model: response.model
+          });
+
           return { success: true, data: validatedOutput };
         } catch (validationError) {
           
           // Circuit Breaker: Skip expensive LLM repair if recovery is disabled for this task
           if (retryConfig.enableRecovery === false) {
             console.warn(`[ValidationOrchestrator] Schema validation failed. Recovery disabled for this task. Short-circuiting.`);
+            
+            // Record failed span but with usage info if available
+            tracer.recordSpan({
+              id: request.schemaName || 'unknown',
+              tokensIn: response.usage.promptTokens,
+              tokensOut: response.usage.completionTokens,
+              latencyMs: Date.now() - attemptStart,
+              success: false,
+              retries: attempt - 1,
+              model: response.model
+            });
+            
             throw validationError;
           }
 
@@ -98,6 +123,17 @@ export class ValidationOrchestrator {
             request
           );
 
+          // Record span for original attempt (which failed validation but consumed tokens)
+          tracer.recordSpan({
+            id: `${request.schemaName}_initial_fail`,
+            tokensIn: response.usage.promptTokens,
+            tokensOut: response.usage.completionTokens,
+            latencyMs: Date.now() - attemptStart,
+            success: false,
+            retries: attempt - 1,
+            model: response.model
+          });
+
           if (recoveryResult.success && recoveryResult.data) {
             return { success: true, data: recoveryResult.data };
           } else {
@@ -109,6 +145,17 @@ export class ValidationOrchestrator {
         lastError = error;
         const errorMessage = error instanceof Error ? error.message : String(error);
         console.error(`[ValidationOrchestrator] Attempt ${attempt} failed: ${errorMessage}`);
+
+        // Record failed attempt span
+        tracer.recordSpan({
+          id: request.schemaName || 'unknown',
+          tokensIn: 0, // Unknown if it failed before usage data
+          tokensOut: 0,
+          latencyMs: Date.now() - attemptStart,
+          success: false,
+          retries: attempt - 1,
+          model: 'error'
+        });
 
         if (attempt < retryConfig.maxAttempts) {
           const backoff = calculateBackoff(attempt, retryConfig);

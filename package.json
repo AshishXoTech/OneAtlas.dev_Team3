@@ -12,6 +12,7 @@
     "test:recovery": "npx tsx src/ai/understanding/tests/recovery.test-runner.ts",
     "test:normalization": "npx tsx src/ai/understanding/tests/normalization.test-runner.ts",
     "test:security": "npx tsx src/ai/understanding/tests/security.test-runner.ts",
+    "test:final": "npx tsx src/ai/understanding/tests/final.test-runner.ts",
     "build": "tsc",
     "dev": "tsc --watch"
   },
