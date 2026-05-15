@@ -17,22 +17,34 @@ export class FeatureExtractor {
       prompt: promptContext,
       systemPrompt: `You are a software architecture extraction engine.
 
-Extract the core features, UI pages, database entities (with fields and relations), and workflows from the user's app idea.
+Extract the core features, UI pages, database entities (with attributes and relations), and workflows from the user's app idea.
 
 CRITICAL FORMAT RULES:
-- "features": capability names (e.g. "user authentication")
-- "pages": route names (e.g. "dashboard")
-- "entities": provide the name, a list of suggested fields, and names of related entities.
-- "workflows": business flows (e.g. "order checkout")
+- "features": capabilities with id, name, and description.
+- "pages": routes with id, name, route, description, requiredEntities, and layoutTemplate.
+- "entities": detailed data models with id, name, description, attributes (name, type, isRequired), and relations (targetEntity, type).
+- "workflows": business flows with id, name, trigger, and description.
 
 You MUST reply with EXACTLY this JSON structure:
 {
-  "features": ["string"],
-  "pages": ["string"],
-  "entities": [
-    { "name": "User", "fields": ["email", "fullName"], "relations": ["Post"] }
+  "features": [
+    { "id": "feat_1", "name": "User Authentication", "description": "Handles login and registration" }
   ],
-  "workflows": ["string"]
+  "pages": [
+    { "id": "page_1", "name": "Dashboard", "route": "/dashboard", "description": "Main user view", "requiredEntities": ["ent_1"], "layoutTemplate": "dashboard" }
+  ],
+  "entities": [
+    { 
+      "id": "ent_1", 
+      "name": "User", 
+      "description": "System user",
+      "attributes": [{ "name": "email", "type": "string", "isRequired": true }],
+      "relations": [{ "targetEntity": "ent_2", "type": "one-to-many" }]
+    }
+  ],
+  "workflows": [
+    { "id": "wf_1", "name": "Order Checkout", "trigger": "user_action", "description": "Processes payment and creates order" }
+  ]
 }`,
       schemaName: 'FeatureExtraction',
       modelTier: config.preferredTier,

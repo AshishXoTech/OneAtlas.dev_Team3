@@ -117,7 +117,8 @@ function buildFieldSchema(fieldName: string): FieldSchema {
 }
 
 export function generateFields(entity: Entity): FieldSchema[] {
-  const generatedFields = entity.fields.map(buildFieldSchema);
+  const fieldNames = entity.fields || (entity.attributes || []).map((a: any) => a.name);
+  const generatedFields = fieldNames.map(buildFieldSchema);
 
   return [...BASE_FIELDS, ...generatedFields];
 }

@@ -61,7 +61,8 @@ export const generateRelationships = (
   const entityNames = entities.map((entity) => entity.name);
 
   for (const entity of entities) {
-    for (const relatedEntity of entity.relations) {
+    const relationTargets = (entity.relations || []).map((r: any) => typeof r === 'string' ? r : r.targetEntity);
+    for (const relatedEntity of relationTargets) {
       const relation = createOneToManyRelation(
         entity.name,
         relatedEntity,
