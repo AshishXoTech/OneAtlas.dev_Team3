@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { BaseProvider } from '../../gateway/providers/base.provider.js';
 import { OutputFormatter } from '../formatters/output.formatter.js';
 import { AIRequest, AIResponse } from '../../gateway/types/gateway.types.js';
+import { tracer } from '../../shared/utils/intelligence_trace.js';
 
 export class ResponseRecovery {
   private provider: BaseProvider;
@@ -63,7 +64,19 @@ ${repairInstructions}`;
     };
 
     try {
+      const repairStart = Date.now();
       const response = await this.provider.generate(repairRequest);
+
+      // Record recovery span
+      tracer.recordSpan({
+        id: `${schemaName}_repair`,
+        tokensIn: response.usage.promptTokens,
+        tokensOut: response.usage.completionTokens,
+        latencyMs: Date.now() - repairStart,
+        success: !!response.content,
+        retries: 0,
+        model: response.model
+      });
 
       if (!response.content) {
         return { success: false, error: "Repair provider returned empty content." };

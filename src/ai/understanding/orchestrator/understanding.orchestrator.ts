@@ -24,7 +24,6 @@ export class UnderstandingOrchestrator {
   private parser = new PromptParser();
   private detector = new AppTypeDetector();
   private appNormalizer = new AppNormalizer();
-  private entityNormalizer = new EntityNormalizer();
 
   private intentExtractor: IntentExtractor;
   private featureExtractor: FeatureExtractor;
@@ -40,123 +39,121 @@ export class UnderstandingOrchestrator {
     const start = Date.now();
     tracer.reset();
 
-    logger.info('UnderstandingOrchestrator', 'PIPELINE_START', 'Starting modular extraction pipeline.', {
-      promptLength: rawPrompt.length
-    });
-
-    // === SECURITY: Adversarial Prompt Defense (Phase 7) ===
-    // Synchronous, zero-cost heuristic guard. Must pass before ANY AI calls are made.
     try {
-      PromptGuard.validate(rawPrompt);
-    } catch (guardError) {
-      tracer.recordSecurityTrigger('PromptGuard');
-      throw guardError;
-    }
+      logger.info('UnderstandingOrchestrator', 'PIPELINE_START', 'Starting modular extraction pipeline.', {
+        promptLength: rawPrompt.length
+      });
 
-    // === EDGE CASE: Empty / trivially short prompt ===
-    if (!rawPrompt || rawPrompt.trim().length < 5) {
-      logger.warn('UnderstandingOrchestrator', 'INVALID_PROMPT', 'Prompt too short for meaningful extraction.');
-      throw new Error('Prompt is too short. Please provide a meaningful application description.');
-    }
+      // === SECURITY: Adversarial Prompt Defense (Phase 7) ===
+      // Synchronous, zero-cost heuristic guard. Must pass before ANY AI calls are made.
+      try {
+        PromptGuard.validate(rawPrompt);
+      } catch (guardError) {
+        tracer.recordSecurityTrigger('PromptGuard');
+        throw guardError;
+      }
 
-    // === EDGE CASE: Token overflow protection ===
-    const { safe, estimatedTokens } = assertPromptSafe(rawPrompt, 3500);
-    let safePrompt = rawPrompt;
-    if (!safe) {
-      logger.warn('UnderstandingOrchestrator', 'TOKEN_OVERFLOW', 'Prompt exceeds safe token limit. Truncating.', { estimatedTokens });
-      safePrompt = truncateToTokenLimit(rawPrompt, 3500);
-    }
+      // === EDGE CASE: Empty / trivially short prompt ===
+      if (!rawPrompt || rawPrompt.trim().length < 5) {
+        logger.warn('UnderstandingOrchestrator', 'INVALID_PROMPT', 'Prompt too short for meaningful extraction.');
+        throw new Error('Prompt is too short. Please provide a meaningful application description.');
+      }
 
-    // 1. Parsing
-    const parsed: ParsedPrompt = await logger.trace('PromptParser', 'PARSE', () =>
-      Promise.resolve(this.parser.parse(safePrompt))
-    );
+      // === EDGE CASE: Token overflow protection ===
+      const { safe, estimatedTokens } = assertPromptSafe(rawPrompt, 3500);
+      let safePrompt = rawPrompt;
+      if (!safe) {
+        logger.warn('UnderstandingOrchestrator', 'TOKEN_OVERFLOW', 'Prompt exceeds safe token limit. Truncating.', { estimatedTokens });
+        safePrompt = truncateToTokenLimit(rawPrompt, 3500);
+      }
 
-    // === EDGE CASE: Noisy/empty keyword extraction ===
-    if (parsed.keywords.length === 0) {
-      logger.warn('UnderstandingOrchestrator', 'NOISY_PROMPT', 'No extractable keywords found. Results may be low confidence.');
-    }
-
-    // 2. Hybrid App Type Detection
-    let appType: AppCategory;
-    let confidence: ConfidenceScore;
-    const heuristicResult = this.detector.detect(parsed);
-
-    if (heuristicResult.confidence >= CONFIDENCE_THRESHOLD) {
-      appType = heuristicResult.type;
-      confidence = { score: heuristicResult.confidence, method: 'heuristic', reliable: true };
-      logger.info('UnderstandingOrchestrator', 'APPTYPE_HEURISTIC', `Fast heuristic detection: ${appType}`, { confidence: confidence.score });
-    } else if (heuristicResult.confidence <= 0.2 && parsed.keywords.length === 0) {
-      // Early-abort: Junk/gibberish prompt — skip expensive AI extraction entirely
-      appType = 'other';
-      confidence = { score: 0.3, method: 'fallback', reliable: false };
-      logger.warn('UnderstandingOrchestrator', 'APPTYPE_EARLY_ABORT', 'Confidence too low and no extractable keywords. Skipping AI extractor.', { heuristicConfidence: heuristicResult.confidence });
-    } else {
-      logger.info('UnderstandingOrchestrator', 'APPTYPE_AI_FALLBACK', 'Low heuristic confidence. Escalating to AI extractor.', { heuristicConfidence: heuristicResult.confidence });
-      appType = await logger.trace('AppTypeExtractor', 'AI_EXTRACT', () =>
-        this.appTypeExtractor.extract(parsed.original)
+      // 1. Parsing
+      const parsed: ParsedPrompt = await logger.trace('PromptParser', 'PARSE', () =>
+        Promise.resolve(this.parser.parse(safePrompt))
       );
-      confidence = { score: 0.75, method: 'ai', reliable: true };
+
+      // === EDGE CASE: Noisy/empty keyword extraction ===
+      if (parsed.keywords.length === 0) {
+        logger.warn('UnderstandingOrchestrator', 'NOISY_PROMPT', 'No extractable keywords found. Results may be low confidence.');
+      }
+
+      // 2. Hybrid App Type Detection
+      let appType: AppCategory;
+      let confidence: ConfidenceScore;
+      const heuristicResult = this.detector.detect(parsed);
+
+      if (heuristicResult.confidence >= CONFIDENCE_THRESHOLD) {
+        appType = heuristicResult.type;
+        confidence = { score: heuristicResult.confidence, method: 'heuristic', reliable: true };
+        logger.info('UnderstandingOrchestrator', 'APPTYPE_HEURISTIC', `Fast heuristic detection: ${appType}`, { confidence: confidence.score });
+      } else if (heuristicResult.confidence <= 0.2 && parsed.keywords.length === 0) {
+        // Early-abort: Junk/gibberish prompt — skip expensive AI extraction entirely
+        appType = 'other';
+        confidence = { score: 0.3, method: 'fallback', reliable: false };
+        logger.warn('UnderstandingOrchestrator', 'APPTYPE_EARLY_ABORT', 'Confidence too low and no extractable keywords. Skipping AI extractor.', { heuristicConfidence: heuristicResult.confidence });
+      } else {
+        logger.info('UnderstandingOrchestrator', 'APPTYPE_AI_FALLBACK', 'Low heuristic confidence. Escalating to AI extractor.', { heuristicConfidence: heuristicResult.confidence });
+        appType = await logger.trace('AppTypeExtractor', 'AI_EXTRACT', () =>
+          this.appTypeExtractor.extract(parsed.original)
+        );
+        confidence = { score: 0.75, method: 'ai', reliable: true };
+      }
+
+      // 3. Parallel AI Extraction with observability
+      const { ARCHETYPE_BASELINES } = await import('./archetypes.js');
+      const baseline = ARCHETYPE_BASELINES[appType.toLowerCase()];
+      const baselineContext = baseline 
+        ? `BASELINE ARCHETYPE: ${JSON.stringify(baseline)}. Use this as a starting point and extend it based on the user's request. Output the FULL graph.`
+        : '';
+
+      const [intentTitle, architecture] = await logger.trace('Extractors', 'PARALLEL_EXTRACT',
+        () => Promise.all([
+          this.intentExtractor.extract(parsed.original),
+          this.featureExtractor.extract(`Intent: ${parsed.original}. Category Scope: ${appType}. ${baselineContext}`)
+        ])
+      );
+
+      // === EDGE CASE: Empty extraction results ===
+      if (architecture.features.length === 0) {
+        logger.warn('UnderstandingOrchestrator', 'EMPTY_FEATURES', 'Feature extractor returned no results. Applying minimal fallback.');
+      }
+
+      // 4. Normalization
+      const normalizedEntities = this.appNormalizer.normalizeEntities(
+        architecture.entities.map(entity => ({
+          id: entity.id,
+          name: entity.name,
+          description: entity.description,
+          attributes: entity.attributes || [],
+          relations: entity.relations || [],
+        }))
+      );
+
+      const finalUnderstanding: AppUnderstanding = {
+        appName: this.appNormalizer.normalizeName(intentTitle),
+        appType,
+        features: this.appNormalizer.normalizeFeatures(architecture.features),
+        pages: this.appNormalizer.normalizePages(architecture.pages),
+        entities: normalizedEntities,
+        workflows: this.appNormalizer.normalizeWorkflows(architecture.workflows),
+        metadata: {
+          rawPrompt: rawPrompt,
+        },
+      };
+
+      const latencyMs = Date.now() - start;
+      logger.info('UnderstandingOrchestrator', 'PIPELINE_COMPLETE', 'Modular pipeline complete.', {
+        appName: finalUnderstanding.appName,
+        appType: finalUnderstanding.appType,
+        featureCount: finalUnderstanding.features.length,
+        entityCount: finalUnderstanding.entities.length,
+        latencyMs,
+        confidence: confidence.score
+      });
+
+      return { data: finalUnderstanding, confidence, latencyMs };
+    } finally {
+      tracer.emitTrace();
     }
-
-    // 3. Parallel AI Extraction with observability
-    const { ARCHETYPE_BASELINES } = await import('./archetypes.js');
-    const baseline = ARCHETYPE_BASELINES[appType.toLowerCase()];
-    const baselineContext = baseline 
-      ? `BASELINE ARCHETYPE: ${JSON.stringify(baseline)}. Use this as a starting point and extend it based on the user's request. Output the FULL graph.`
-      : '';
-
-    const [intentTitle, architecture] = await logger.trace('Extractors', 'PARALLEL_EXTRACT',
-      () => Promise.all([
-        this.intentExtractor.extract(parsed.original),
-        this.featureExtractor.extract(`Intent: ${parsed.original}. Category Scope: ${appType}. ${baselineContext}`)
-      ])
-    );
-
-    // === EDGE CASE: Empty extraction results ===
-    if (architecture.features.length === 0) {
-      logger.warn('UnderstandingOrchestrator', 'EMPTY_FEATURES', 'Feature extractor returned no results. Applying minimal fallback.');
-    }
-
-    // 4. Normalization
-    /**
-     * CRITICAL BRIDGE: Pass entities through the Phase 6 Graph Normalizer.
-     * This enforces bi-directional relations, deduplicates aliases ("Client" vs "Customer"),
-     * and ensures the full EntityNode contract is satisfied before strict validation.
-     */
-    const normalizedEntities = this.appNormalizer.normalizeEntities(
-      architecture.entities.map(entity => ({
-        id: entity.id,
-        name: entity.name,
-        description: entity.description,
-        attributes: entity.attributes || [],
-        relations: entity.relations || [],
-      }))
-    );
-
-    const finalUnderstanding: AppUnderstanding = {
-      appName: this.appNormalizer.normalizeName(intentTitle),
-      appType,
-      features: this.appNormalizer.normalizeFeatures(architecture.features),
-      pages: this.appNormalizer.normalizePages(architecture.pages),
-      entities: normalizedEntities,
-      workflows: this.appNormalizer.normalizeWorkflows(architecture.workflows),
-      metadata: {
-        rawPrompt: rawPrompt,
-      },
-    };
-
-    const latencyMs = Date.now() - start;
-    logger.info('UnderstandingOrchestrator', 'PIPELINE_COMPLETE', 'Modular pipeline complete.', {
-      appName: finalUnderstanding.appName,
-      appType: finalUnderstanding.appType,
-      featureCount: finalUnderstanding.features.length,
-      entityCount: finalUnderstanding.entities.length,
-      latencyMs,
-      confidence: confidence.score
-    });
-    
-    tracer.emitTrace();
-    return { data: finalUnderstanding, confidence, latencyMs };
   }
 }
