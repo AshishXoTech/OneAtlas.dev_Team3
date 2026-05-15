@@ -23,13 +23,27 @@ export class ResponseRecovery {
     console.log(`[ResponseRecovery] Triggering repair pipeline for schema: ${schemaName}`);
 
     const systemPrompt = `You are a strict, highly accurate JSON structural repair engine.
-Your ONLY job is to take a malformed or invalid JSON payload and output a perfectly repaired JSON object that strictly adheres to the requested schema.
-Do NOT hallucinate new data. Preserve the intent of the original data. 
+Your job is to fix the exact validation or semantic errors in the provided JSON payload.
+You MUST return the FULL repaired JSON payload. Do NOT just return a partial patch.
+Do NOT hallucinate new data. Preserve the intent of the original data, but modify relations or fields as needed to satisfy the schema or remove cyclical logic. 
 Do NOT output markdown. Return raw JSON only.`;
 
-    const errorMessage = validationError instanceof z.ZodError 
-      ? JSON.stringify(validationError.issues, null, 2) 
-      : validationError.message;
+    let errorMessage = '';
+    let repairInstructions = '';
+
+    if (validationError.name === 'SemanticGraphError') {
+      errorMessage = validationError.message;
+      repairInstructions = `A semantic graph error was detected (e.g. a cyclical dependency or dangling relation).
+Please modify the 'relations' arrays in the relevant entities to break the cycle or fix the missing reference, and output the FULL repaired JSON object.`;
+    } else if (validationError instanceof z.ZodError) {
+      const paths = validationError.issues.map(i => i.path.join('.')).join(', ');
+      errorMessage = JSON.stringify(validationError.issues, null, 2);
+      repairInstructions = `Zod Schema Validation failed at paths: [${paths}].
+Please repair the payload at these specific paths so it passes validation, and output the FULL repaired JSON object.`;
+    } else {
+      errorMessage = validationError.message;
+      repairInstructions = `An unknown parsing error occurred. Please repair the JSON to ensure it is valid and strictly adheres to the schema. Output the FULL JSON object.`;
+    }
 
     const userPrompt = `
 Malformed Payload:
@@ -38,7 +52,8 @@ ${malformedContent}
 Validation/Parsing Errors:
 ${errorMessage}
 
-Please repair the payload so it passes validation.`;
+INSTRUCTIONS:
+${repairInstructions}`;
 
     // The secondary request to the FAST model
     const repairRequest: AIRequest<any> = {

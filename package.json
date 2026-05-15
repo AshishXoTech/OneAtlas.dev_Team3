@@ -9,6 +9,9 @@
     "test:chain": "npx tsx src/ai/prompts/chains/test-chain.ts",
     "test:mutation": "npx tsx src/ai/understanding/tests/mutation.test-runner.ts",
     "test:memory": "npx tsx src/ai/understanding/tests/memory.test-runner.ts",
+    "test:recovery": "npx tsx src/ai/understanding/tests/recovery.test-runner.ts",
+    "test:normalization": "npx tsx src/ai/understanding/tests/normalization.test-runner.ts",
+    "test:security": "npx tsx src/ai/understanding/tests/security.test-runner.ts",
     "build": "tsc",
     "dev": "tsc --watch"
   },

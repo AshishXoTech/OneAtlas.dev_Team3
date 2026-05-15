@@ -5,6 +5,7 @@ import { FeatureExtractor } from '../extractors/feature.extractor.js';
 import { AppTypeExtractor } from '../extractors/apptype.extractor.js';
 import { AppNormalizer } from '../normalizer/app.normalizer.js';
 import { EntityNormalizer } from '../normalizer/entity.normalizer.js';
+import { PromptGuard } from '../../validation/security/prompt.guard.js';
 // Import the SHARED authoritative type — this is what the generation engine consumes
 import { AppUnderstanding, Entity } from '../../shared/types/app-understanding.types.js';
 import { ModelRouter } from '../../gateway/router/model.router.js';
@@ -39,6 +40,10 @@ export class UnderstandingOrchestrator {
     logger.info('UnderstandingOrchestrator', 'PIPELINE_START', 'Starting modular extraction pipeline.', {
       promptLength: rawPrompt.length
     });
+
+    // === SECURITY: Adversarial Prompt Defense (Phase 7) ===
+    // Synchronous, zero-cost heuristic guard. Must pass before ANY AI calls are made.
+    PromptGuard.validate(rawPrompt);
 
     // === EDGE CASE: Empty / trivially short prompt ===
     if (!rawPrompt || rawPrompt.trim().length < 5) {
@@ -101,21 +106,26 @@ export class UnderstandingOrchestrator {
 
     // 4. Normalization
     /**
-     * CRITICAL BRIDGE: Transform AI-extracted entities into standardized Entity objects.
-     * We normalize the names but preserve the fields and relationships suggested by the AI.
+     * CRITICAL BRIDGE: Pass entities through the Phase 6 Graph Normalizer.
+     * This enforces bi-directional relations, deduplicates aliases ("Client" vs "Customer"),
+     * and ensures the full EntityNode contract is satisfied before strict validation.
      */
-    const entities: Entity[] = architecture.entities.map(entity => ({
-      name: this.entityNormalizer.normalize([entity.name])[0] || entity.name,
-      fields: entity.fields,
-      relations: entity.relations,
-    }));
+    const normalizedEntities = this.appNormalizer.normalizeEntities(
+      architecture.entities.map(entity => ({
+        id: entity.id,
+        name: entity.name,
+        description: entity.description,
+        attributes: entity.attributes || [],
+        relations: entity.relations || [],
+      }))
+    );
 
     const finalUnderstanding: AppUnderstanding = {
       appName: this.appNormalizer.normalizeName(intentTitle),
       appType,
       features: this.appNormalizer.normalizeFeatures(architecture.features),
       pages: this.appNormalizer.normalizePages(architecture.pages),
-      entities,
+      entities: normalizedEntities,
       workflows: this.appNormalizer.normalizeWorkflows(architecture.workflows),
       metadata: {
         rawPrompt: rawPrompt,

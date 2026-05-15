@@ -69,6 +69,17 @@ export class ValidationOrchestrator {
             validatedOutput = request.schema.parse(rawJson);
           }
 
+          // Step 2.5: Semantic Validation (Phase 5)
+          const { GraphValidator, SemanticGraphError } = await import('./graph.validator.js');
+          try {
+            GraphValidator.validate(validatedOutput);
+          } catch (graphError) {
+            if (graphError instanceof SemanticGraphError) {
+              throw graphError; // Will be caught by the outer catch and sent to recovery
+            }
+            throw graphError; // Unexpected error
+          }
+
           return { success: true, data: validatedOutput };
         } catch (validationError) {
           
