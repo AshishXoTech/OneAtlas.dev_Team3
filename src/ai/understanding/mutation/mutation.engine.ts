@@ -1,7 +1,7 @@
 import { ModelRouter } from '../../gateway/router/model.router.js';
 import { MutationClassifier } from './mutation.classifier.js';
-import { AppUnderstanding } from '../../shared/types/app-understanding.types.js';
-import { MutationPatch } from '../../validation/schemas/mutation.schema.js';
+import type { AppUnderstanding } from '../../shared/types/app-understanding.types.js';
+import type { MutationPatch } from '../../validation/schemas/mutation.schema.js';
 import { logger } from '../../shared/utils/logger.js';
 import { UnderstandingOrchestrator } from '../orchestrator/understanding.orchestrator.js';
 import { AppNormalizer } from '../normalizer/app.normalizer.js';

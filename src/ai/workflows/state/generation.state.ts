@@ -76,5 +76,4 @@ export const createInitialStages = (): StageResult[] => {
     }),
   );
 };
-
-export default GenerationRunState;
+

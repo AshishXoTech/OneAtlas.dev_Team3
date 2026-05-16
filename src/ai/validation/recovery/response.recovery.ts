@@ -1,8 +1,9 @@
 import { z } from 'zod';
 import { OutputFormatter } from '../formatters/output.formatter.js';
-import { AIRequest } from '../../gateway/types/gateway.types.js';
+import type { AIRequest } from '../../gateway/types/gateway.types.js';
 import { tracer } from '../../shared/utils/intelligence_trace.js';
 import { ModelRouter } from '../../gateway/router/model.router.js';
+import { logger } from '../../shared/utils/logger.js';
 
 /**
  * ResponseRecovery — adaptive repair pipeline.
@@ -21,7 +22,7 @@ export class ResponseRecovery {
     // Use the router to get a healthy recovery provider
     const { provider, name: providerName } = this.router.getProviderForTask('RECOVERY');
     
-    console.log(`[ResponseRecovery] Triggering repair pipeline for ${schemaName} on ${providerName}`);
+    logger.info('ResponseRecovery', 'REPAIR_START', `Triggering repair pipeline for ${schemaName} on ${providerName}`);
 
     const systemPrompt = `Strict JSON repair engine. Fix validation/semantic errors. 
 Return FULL repaired JSON payload only. No markdown. No hallucinations.`;
@@ -95,7 +96,7 @@ ${repairInstructions}`;
           validatedOutput = request.schema.parse(repairedJson);
         }
 
-        console.log(`[ResponseRecovery] Successfully repaired JSON for: ${schemaName}`);
+        logger.info('ResponseRecovery', 'REPAIR_SUCCESS', `Successfully repaired JSON for: ${schemaName}`);
         return { success: true, data: validatedOutput };
       } catch (parseError) {
         this.router.recordFailure(providerName, parseError);
@@ -103,7 +104,7 @@ ${repairInstructions}`;
       }
     } catch (error) {
       this.router.recordFailure(providerName, error);
-      console.error(`[ResponseRecovery] JSON repair critically failed.`, error);
+      logger.error('ResponseRecovery', 'REPAIR_CRITICAL_FAILURE', `JSON repair critically failed for ${schemaName}`, { error: error instanceof Error ? error.message : String(error) });
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   }

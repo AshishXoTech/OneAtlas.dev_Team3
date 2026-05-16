@@ -32,8 +32,8 @@ export class UnderstandingChain {
           // 1. Dynamic Routing: Get the best provider/model for Architecture Design
           const { provider, config } = router.getProviderForTask('ARCHITECTURE_DESIGN');
           
-          // 2. Wrap provider in our iron-clad Validation Reliability Pipeline
-          const orchestrator = new ValidationOrchestrator(provider);
+          // 2. Wrap router in our iron-clad Validation Reliability Pipeline
+          const orchestrator = new ValidationOrchestrator(router, 'ARCHITECTURE_DESIGN');
 
           const request: AIRequest<AppUnderstanding, any> = {
             prompt: ctx.userPrompt,

@@ -1,4 +1,4 @@
-import { FeatureNode, PageNode, WorkflowNode } from '../../shared/types/app-understanding.types.js';
+import type { FeatureNode, PageNode, WorkflowNode } from '../../shared/types/app-understanding.types.js';
 
 export class AppNormalizer {
   normalizeName(name: string): string {

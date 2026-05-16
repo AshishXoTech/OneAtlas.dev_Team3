@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { ModelRouter } from '../../gateway/router/model.router.js';
 import { MutationEngine } from '../mutation/mutation.engine.js';
-import { AppUnderstanding } from '../../shared/types/app-understanding.types.js';
+import type { AppUnderstanding } from '../../shared/types/app-understanding.types.js';
 import { logger } from '../../shared/utils/logger.js';
 
 const INITIAL_APP: AppUnderstanding = {

@@ -1,5 +1,6 @@
 import 'dotenv/config'; // Loads .env before any process.env access
-import { TEST_SUITE, TestCase } from './understanding.test-suite.js';
+import { TEST_SUITE } from './understanding.test-suite.js';
+import type { TestCase } from './understanding.test-suite.js';
 import { UnderstandingOrchestrator } from '../orchestrator/understanding.orchestrator.js';
 import { ModelRouter } from '../../gateway/router/model.router.js';
 import { logger } from '../../shared/utils/logger.js';

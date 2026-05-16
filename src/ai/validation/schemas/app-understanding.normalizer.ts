@@ -1,4 +1,4 @@
-import { AppUnderstandingExtraction } from './app-understanding.extraction.schema.js';
+import type { AppUnderstandingExtraction } from './app-understanding.extraction.schema.js';
 
 export function normalizeLayoutTemplate(template?: string): string {
   if (!template) return 'blank';

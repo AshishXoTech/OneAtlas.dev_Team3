@@ -1,4 +1,4 @@
-import { AppCategory } from '../detector/apptype.detector.js';
+import type { AppCategory } from '../detector/apptype.detector.js';
 
 /**
  * Canonical Category Alias Normalizer

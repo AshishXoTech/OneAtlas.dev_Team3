@@ -1,8 +1,11 @@
 import { z } from 'zod';
 import { ResponseRecovery } from '../recovery/response.recovery.js';
 import { OutputFormatter } from '../formatters/output.formatter.js';
-import { calculateBackoff, delay, withTimeout, RetryConfig, DEFAULT_RETRY_CONFIG } from '../recovery/fallback.strategies.js';
-import { AIRequest, AIResponse } from '../../gateway/types/gateway.types.js';
+import { calculateBackoff, delay, withTimeout, DEFAULT_RETRY_CONFIG } from '../recovery/fallback.strategies.js';
+import type { RetryConfig } from '../recovery/fallback.strategies.js';
+import type { AppUnderstanding, EntityNode } from '../../shared/types/app-understanding.types.js';
+import type { AIRequest, AIResponse } from '../../gateway/types/gateway.types.js';
+import { logger } from '../../shared/utils/logger.js';
 import { tracer } from '../../shared/utils/intelligence_trace.js';
 import { ModelRouter } from '../../gateway/router/model.router.js';
 
@@ -45,7 +48,7 @@ export class ValidationOrchestrator {
       const { provider, name: providerName } = this.router.getProviderForTask(this.taskType, attempt - 1);
       
       try {
-        console.log(`[ValidationOrchestrator] Executing request '${request.schemaName}' on ${providerName} (Attempt ${attempt}/${retryConfig.maxAttempts})`);
+        logger.info('ValidationOrchestrator', 'EXECUTION_START', `Executing request '${request.schemaName}' on ${providerName} (Attempt ${attempt}/${retryConfig.maxAttempts})`);
         
         // Step 1: Execute primary provider generation
         const timeoutMs = retryConfig.timeoutMs || 60000;
@@ -103,7 +106,7 @@ export class ValidationOrchestrator {
           lastError = validationError;
           
           if (retryConfig.enableRecovery === false) {
-            console.warn(`[ValidationOrchestrator] Schema validation failed on ${providerName}. Recovery disabled. Failover to next candidate.`);
+            logger.warn('ValidationOrchestrator', 'VALIDATION_FAILED_RECOVERY_DISABLED', `Schema validation failed on ${providerName}. Recovery disabled. Failover to next candidate.`);
             
             tracer.recordSpan({
               id: request.schemaName || 'unknown',
@@ -119,7 +122,7 @@ export class ValidationOrchestrator {
             continue;
           }
 
-          console.warn(`[ValidationOrchestrator] Validation failed on ${providerName}. Engaging Recovery Pipeline.`);
+          logger.warn('ValidationOrchestrator', 'RECOVERY_ENGAGED', `Validation failed on ${providerName}. Engaging Recovery Pipeline.`);
           
           // Step 3: Trigger Auto-Repair Pipeline
           const recoveryResult = await this.recovery.attemptRepair(
@@ -142,7 +145,7 @@ export class ValidationOrchestrator {
             this.router.recordSuccess(providerName);
             return { success: true, data: recoveryResult.data };
           } else {
-            console.warn(`[ValidationOrchestrator] Recovery failed on ${providerName}.`);
+            logger.warn('ValidationOrchestrator', 'RECOVERY_FAILED', `Recovery failed on ${providerName}.`);
             attempt++;
             continue;
           }
@@ -153,7 +156,7 @@ export class ValidationOrchestrator {
         this.router.recordFailure(providerName, error);
         
         const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error(`[ValidationOrchestrator] Attempt ${attempt} failed on ${providerName}: ${errorMessage}`);
+        logger.error('ValidationOrchestrator', 'ATTEMPT_FAILED', `Attempt ${attempt} failed on ${providerName}: ${errorMessage}`);
 
         tracer.recordSpan({
           id: request.schemaName || 'unknown',
@@ -167,7 +170,7 @@ export class ValidationOrchestrator {
 
         if (attempt < retryConfig.maxAttempts) {
           const waitMs = calculateBackoff(attempt, retryConfig);
-          console.log(`[ValidationOrchestrator] Throttling... Waiting ${waitMs}ms before failover...`);
+          logger.info('ValidationOrchestrator', 'THROTTLING', `Throttling... Waiting ${waitMs}ms before failover...`);
           await delay(waitMs);
           attempt++;
         } else {

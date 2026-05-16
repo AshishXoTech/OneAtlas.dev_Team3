@@ -1,5 +1,7 @@
-import { PromptParser, ParsedPrompt } from '../parser/prompt.parser.js';
-import { AppTypeDetector, AppCategory } from '../detector/apptype.detector.js';
+import { PromptParser } from '../parser/prompt.parser.js';
+import type { ParsedPrompt } from '../parser/prompt.parser.js';
+import { AppTypeDetector } from '../detector/apptype.detector.js';
+import type { AppCategory } from '../detector/apptype.detector.js';
 import { IntentExtractor } from '../extractors/intent.extractor.js';
 import { FeatureExtractor } from '../extractors/feature.extractor.js';
 import { AppTypeExtractor } from '../extractors/apptype.extractor.js';
@@ -7,11 +9,12 @@ import { AppNormalizer } from '../normalizer/app.normalizer.js';
 import { EntityNormalizer } from '../normalizer/entity.normalizer.js';
 import { PromptGuard } from '../../validation/security/prompt.guard.js';
 // Import the SHARED authoritative type — this is what the generation engine consumes
-import { AppUnderstanding, Entity } from '../../shared/types/app-understanding.types.js';
+import type { AppUnderstanding, Entity } from '../../shared/types/app-understanding.types.js';
 import { ModelRouter } from '../../gateway/router/model.router.js';
 import { logger } from '../../shared/utils/logger.js';
 import { truncateToTokenLimit, assertPromptSafe } from '../../shared/utils/token.utils.js';
-import { ConfidenceScore, CONFIDENCE_THRESHOLD } from '../../shared/types/common.types.js';
+import type { ConfidenceScore } from '../../shared/types/common.types.js';
+import { CONFIDENCE_THRESHOLD } from '../../shared/types/common.types.js';
 import { tracer } from '../../shared/utils/intelligence_trace.js';
 
 export interface UnderstandingResult {

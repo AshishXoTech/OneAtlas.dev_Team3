@@ -2,9 +2,10 @@
   "name": "oneatlas.dev_team3",
   "version": "1.0.0",
   "type": "module",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npx tsx src/ai/understanding/tests/final.test-runner.ts",
     "test:ai": "npx tsx src/ai/understanding/tests/understanding.test-runner.ts",
     "test:chain": "npx tsx src/ai/prompts/chains/test-chain.ts",
     "test:mutation": "npx tsx src/ai/understanding/tests/mutation.test-runner.ts",

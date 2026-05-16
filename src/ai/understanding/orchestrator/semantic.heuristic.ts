@@ -1,5 +1,5 @@
-import { AppUnderstanding } from '../../shared/types/app-understanding.types.js';
-import { AppCategory } from '../detector/apptype.detector.js';
+import type { AppUnderstanding } from '../../shared/types/app-understanding.types.js';
+import type { AppCategory } from '../detector/apptype.detector.js';
 import { ARCHETYPE_BASELINES } from './archetypes.js';
 
 /**

@@ -1,4 +1,4 @@
-import { AppUnderstanding, EntityNode } from '../../shared/types/app-understanding.types.js';
+import type { AppUnderstanding, EntityNode } from '../../shared/types/app-understanding.types.js';
 
 export class SemanticGraphError extends Error {
   constructor(message: string) {
