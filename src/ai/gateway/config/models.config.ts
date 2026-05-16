@@ -51,8 +51,8 @@ export const MODELS_CONFIG = {
   },
 
   OPENROUTER: {
-    FAST: 'qwen/qwen3-coder:free',
-    CAPABLE: 'openai/gpt-oss-120b:free',
+    FAST: 'deepseek/deepseek-chat-v3-0324',
+    CAPABLE: 'google/gemma-4-31b-it:free',
     REASONING: 'deepseek/deepseek-v4-flash:free'
   }
 } as const;

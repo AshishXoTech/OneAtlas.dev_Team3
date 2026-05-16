@@ -1,27 +1,28 @@
 import { z } from 'zod';
-import { BaseProvider } from '../../gateway/providers/base.provider.js';
 import { ResponseRecovery } from '../recovery/response.recovery.js';
 import { OutputFormatter } from '../formatters/output.formatter.js';
 import { calculateBackoff, delay, withTimeout, RetryConfig, DEFAULT_RETRY_CONFIG } from '../recovery/fallback.strategies.js';
 import { AIRequest, AIResponse } from '../../gateway/types/gateway.types.js';
 import { tracer } from '../../shared/utils/intelligence_trace.js';
+import { ModelRouter } from '../../gateway/router/model.router.js';
 
 export type OrchestrationResult<T> = 
   | { success: true; data: T }
   | { success: false; error: { type: 'VALIDATION_ERROR' | 'PROVIDER_ERROR' | 'RECOVERY_ERROR' | 'TIMEOUT_ERROR'; message: string; details?: any } };
 
 export class ValidationOrchestrator {
-  private provider: BaseProvider;
   private recovery: ResponseRecovery;
 
-  constructor(provider: BaseProvider) {
-    this.provider = provider;
-    this.recovery = new ResponseRecovery(provider);
+  constructor(
+    private router: ModelRouter,
+    private taskType: string = 'DEFAULT'
+  ) {
+    this.recovery = new ResponseRecovery(router);
   }
 
   /**
    * Orchestrates the execution, strict validation, and auto-recovery of an AI request.
-   * Ensures that either a strictly validated JSON payload is returned, or a safe typed error.
+   * Now with adaptive cross-provider failover and health tracking.
    */
   async executeWithValidation<T>(
     request: AIRequest<T>,
@@ -39,21 +40,26 @@ export class ValidationOrchestrator {
 
     while (attempt <= retryConfig.maxAttempts) {
       const attemptStart = Date.now();
+      
+      // Adaptive Routing: Resolve healthy provider for this attempt
+      const { provider, name: providerName } = this.router.getProviderForTask(this.taskType, attempt - 1);
+      
       try {
-        console.log(`[ValidationOrchestrator] Executing request '${request.schemaName}' (Attempt ${attempt}/${retryConfig.maxAttempts})`);
+        console.log(`[ValidationOrchestrator] Executing request '${request.schemaName}' on ${providerName} (Attempt ${attempt}/${retryConfig.maxAttempts})`);
         
-        // Step 1: Execute primary provider generation wrapped in a safety timeout
+        // Step 1: Execute primary provider generation
         const timeoutMs = retryConfig.timeoutMs || 60000;
         const response: AIResponse<T> = await withTimeout(
-          this.provider.generate(request), 
+          provider.generate(request), 
           timeoutMs
         );
 
-        if (!response.content) {
-          throw new Error("Provider returned empty content.");
+        if (!response.content || response.content.trim().length < 5) {
+          // PRINCIPAL FIX: Detect "Semantic Null" responses
+          throw new Error("PROVIDER_ANOMALY: Empty or trivial content returned.");
         }
 
-        // Step 2: Enforce Strict Schema Validation manually to catch parsing failures natively
+        // Step 2: Enforce Strict Schema Validation
         try {
           const cleanedContent = OutputFormatter.format(response.content);
           const rawJson = JSON.parse(cleanedContent);
@@ -63,26 +69,25 @@ export class ValidationOrchestrator {
             // New Architecture: Permissive Extraction -> Normalization -> Strict Validation
             const extracted = request.extractionSchema.parse(rawJson);
             const normalized = request.normalizer(extracted);
-            if (!request.schema) throw new Error("Missing runtime schema.");
             validatedOutput = request.schema.parse(normalized);
           } else {
             // Legacy Architecture: Strict Validation directly
-            if (!request.schema) throw new Error("Missing runtime schema.");
             validatedOutput = request.schema.parse(rawJson);
           }
 
-          // Step 2.5: Semantic Validation (Phase 5)
+          // Step 2.5: Semantic Validation (Graph Invariants)
           const { GraphValidator, SemanticGraphError } = await import('./graph.validator.js');
           try {
             GraphValidator.validate(validatedOutput);
           } catch (graphError) {
             if (graphError instanceof SemanticGraphError) {
-              throw graphError; // Will be caught by the outer catch and sent to recovery
+              throw graphError; // Sent to recovery
             }
-            throw graphError; // Unexpected error
+            throw graphError; 
           }
 
-          // Record successful span
+          // SUCCESS: Record health and telemetry
+          this.router.recordSuccess(providerName);
           tracer.recordSpan({
             id: request.schemaName || 'unknown',
             tokensIn: response.usage.promptTokens,
@@ -95,12 +100,11 @@ export class ValidationOrchestrator {
 
           return { success: true, data: validatedOutput };
         } catch (validationError) {
+          lastError = validationError;
           
-          // Circuit Breaker: Skip expensive LLM repair if recovery is disabled for this task
           if (retryConfig.enableRecovery === false) {
-            console.warn(`[ValidationOrchestrator] Schema validation failed. Recovery disabled for this task. Short-circuiting.`);
+            console.warn(`[ValidationOrchestrator] Schema validation failed on ${providerName}. Recovery disabled. Failover to next candidate.`);
             
-            // Record failed span but with usage info if available
             tracer.recordSpan({
               id: request.schemaName || 'unknown',
               tokensIn: response.usage.promptTokens,
@@ -111,19 +115,19 @@ export class ValidationOrchestrator {
               model: response.model
             });
             
-            throw validationError;
+            attempt++;
+            continue;
           }
 
-          console.warn(`[ValidationOrchestrator] Schema validation or JSON parse failed. Engaging Recovery Pipeline.`);
+          console.warn(`[ValidationOrchestrator] Validation failed on ${providerName}. Engaging Recovery Pipeline.`);
           
-          // Step 3: Trigger Auto-Repair Pipeline if parsing/validation fails
+          // Step 3: Trigger Auto-Repair Pipeline
           const recoveryResult = await this.recovery.attemptRepair(
             response.content,
             validationError instanceof Error ? validationError : new Error('Unknown parsing error'),
             request
           );
 
-          // Record span for original attempt (which failed validation but consumed tokens)
           tracer.recordSpan({
             id: `${request.schemaName}_initial_fail`,
             tokensIn: response.usage.promptTokens,
@@ -135,46 +139,51 @@ export class ValidationOrchestrator {
           });
 
           if (recoveryResult.success && recoveryResult.data) {
+            this.router.recordSuccess(providerName);
             return { success: true, data: recoveryResult.data };
           } else {
-            throw new Error(`Recovery system failed to repair payload: ${recoveryResult.error}`);
+            console.warn(`[ValidationOrchestrator] Recovery failed on ${providerName}.`);
+            attempt++;
+            continue;
           }
         }
-
       } catch (error) {
         lastError = error;
+        // FAIL: Record failure to trigger failover
+        this.router.recordFailure(providerName, error);
+        
         const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error(`[ValidationOrchestrator] Attempt ${attempt} failed: ${errorMessage}`);
+        console.error(`[ValidationOrchestrator] Attempt ${attempt} failed on ${providerName}: ${errorMessage}`);
 
-        // Record failed attempt span
         tracer.recordSpan({
           id: request.schemaName || 'unknown',
-          tokensIn: 0, // Unknown if it failed before usage data
+          tokensIn: 0,
           tokensOut: 0,
           latencyMs: Date.now() - attemptStart,
           success: false,
           retries: attempt - 1,
-          model: 'error'
+          model: providerName
         });
 
         if (attempt < retryConfig.maxAttempts) {
-          const backoff = calculateBackoff(attempt, retryConfig);
-          console.log(`[ValidationOrchestrator] Throttling... Waiting ${Math.round(backoff)}ms before retry...`);
-          await delay(backoff);
+          const waitMs = calculateBackoff(attempt, retryConfig);
+          console.log(`[ValidationOrchestrator] Throttling... Waiting ${waitMs}ms before failover...`);
+          await delay(waitMs);
+          attempt++;
+        } else {
+          break;
         }
-        attempt++;
       }
     }
 
-    // Step 4: Complete Failure State - Return safely strongly typed structured error
     const isTimeout = lastError instanceof Error && lastError.message.includes('timed out');
-    return {
-      success: false,
-      error: {
-        type: isTimeout ? 'TIMEOUT_ERROR' : 'RECOVERY_ERROR',
-        message: `Request failed catastrophically after ${retryConfig.maxAttempts} attempts.`,
+    return { 
+      success: false, 
+      error: { 
+        type: isTimeout ? 'TIMEOUT_ERROR' : 'PROVIDER_ERROR', 
+        message: `Max attempts reached for ${request.schemaName}.`,
         details: lastError instanceof Error ? lastError.message : String(lastError)
-      }
+      } 
     };
   }
 }

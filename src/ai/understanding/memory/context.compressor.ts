@@ -6,7 +6,7 @@ import { AppUnderstanding } from '../../shared/types/app-understanding.types.js'
  */
 export type CompressedAppUnderstanding = Omit<AppUnderstanding, 'features' | 'pages' | 'entities' | 'workflows'> & {
   features: { id: string; name: string }[];
-  pages: { id: string; name: string; requiredEntities: string[] }[];
+  pages: { id: string; name: string; route: string; requiredEntities: string[] }[];
   entities: {
     id: string;
     name: string;
@@ -32,6 +32,7 @@ export class ContextCompressor {
       pages: spec.pages.map(p => ({
         id: p.id,
         name: p.name,
+        route: p.route,
         requiredEntities: p.requiredEntities
       })),
       entities: spec.entities.map(e => ({

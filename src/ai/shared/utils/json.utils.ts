@@ -28,14 +28,52 @@ export class JsonUtils {
   }
 
   /**
+   * Deeply repairs truncated JSON by closing dangling braces/brackets.
+   * Essential for recovering partial semantic state from cut-off provider outputs.
+   */
+  static tryRepairTruncated(content: string): string {
+    let cleaned = content.trim();
+    if (!cleaned.startsWith('{') && !cleaned.startsWith('[')) return cleaned;
+
+    const stack: string[] = [];
+    let inString = false;
+    let escaped = false;
+
+    for (let i = 0; i < cleaned.length; i++) {
+      const char = cleaned[i];
+      if (char === '"' && !escaped) inString = !inString;
+      if (inString) {
+        escaped = char === '\\' && !escaped;
+        continue;
+      }
+
+      if (char === '{') stack.push('}');
+      else if (char === '[') stack.push(']');
+      else if (char === '}' || char === ']') {
+        if (stack.length > 0 && stack[stack.length - 1] === char) {
+          stack.pop();
+        }
+      }
+    }
+
+    return cleaned + stack.reverse().join('');
+  }
+
+  /**
    * Safe JSON parse that handles errors gracefully.
+   * Now with aggressive truncated recovery.
    */
   static safeParse<T>(content: string): T | null {
+    const cleaned = this.cleanMarkdown(content);
     try {
-      const cleaned = this.cleanMarkdown(content);
       return JSON.parse(cleaned) as T;
     } catch (err) {
-      return null;
+      try {
+        const repaired = this.tryRepairTruncated(cleaned);
+        return JSON.parse(repaired) as T;
+      } catch (secondErr) {
+        return null;
+      }
     }
   }
 }

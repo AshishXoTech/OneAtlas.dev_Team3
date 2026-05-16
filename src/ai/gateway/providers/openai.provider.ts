@@ -4,6 +4,7 @@ import { BaseProvider } from './base.provider.js';
 import { ProviderConfig, AIRequest, AIResponse } from '../types/gateway.types.js';
 import { MODELS_CONFIG } from '../config/models.config.js';
 import { PROVIDER_CONFIG } from '../config/provider.config.js';
+import { SafeCompletionExtractor } from './safe-completion.js';
 
 export class OpenAIProvider extends BaseProvider {
   private client: OpenAI;
@@ -46,26 +47,25 @@ export class OpenAIProvider extends BaseProvider {
     try {
       const completion = await this.client.chat.completions.create(completionParams);
       
-      const choice = completion.choices[0];
-      const content = choice.message.content || '';
+      // PRINCIPAL FIX: Use safe extractor to prevent "choices[0]" TypeErrors
+      const content = SafeCompletionExtractor.extractOpenAI(completion, 'OPENAI');
       
       let parsedOutput: T | undefined;
       
       if (request.schema && content) {
-        // The API strictly adheres to the schema in structured output mode,
-        // but parsing it through Zod provides strong runtime typing and validation guarantees.
-        parsedOutput = request.schema.parse(JSON.parse(content));
+        try {
+          parsedOutput = request.schema.parse(JSON.parse(content));
+        } catch (parseErr) {
+          // If native parsing fails, we still return content so Orchestrator can recover
+          console.warn('[OpenAIProvider] Native parse failed, relying on Orchestrator recovery.');
+        }
       }
 
       return {
         content,
         parsedOutput,
-        usage: {
-          promptTokens: completion.usage?.prompt_tokens || 0,
-          completionTokens: completion.usage?.completion_tokens || 0,
-          totalTokens: completion.usage?.total_tokens || 0,
-        },
-        model: completion.model,
+        usage: SafeCompletionExtractor.extractUsage(completion),
+        model: completion.model || model,
       };
     } catch (error) {
       // In production, integrate this with the ResponseRecovery or a Logger.

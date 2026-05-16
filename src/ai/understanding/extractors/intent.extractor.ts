@@ -11,8 +11,8 @@ export class IntentExtractor {
    * Useful for generating the App Name and defining global application scope.
    */
   async extract(prompt: string): Promise<string> {
-    const { provider, config } = this.router.getProviderForTask('INTENT_EXTRACTION');
-    const orchestrator = new ValidationOrchestrator(provider);
+    const { config } = this.router.getProviderForTask('INTENT_EXTRACTION');
+    const orchestrator = new ValidationOrchestrator(this.router, 'INTENT_EXTRACTION');
 
     // Intent is lightweight metadata. Fail fast and fallback cleanly if needed.
     const result = await orchestrator.executeWithValidation({

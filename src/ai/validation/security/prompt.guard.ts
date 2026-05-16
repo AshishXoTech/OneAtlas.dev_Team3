@@ -40,9 +40,10 @@ export class PromptGuard {
    */
   static validate(rawPrompt: string): void {
     // 1. Length sanity check — extremely long prompts may be token-stuffing attacks
-    if (rawPrompt.length > 4000) {
-      logger.warn('PromptGuard', 'PROMPT_TOO_LONG', 'Prompt exceeds safe character limit.', { length: rawPrompt.length });
-      throw new PromptGuardError(`Prompt is too long (${rawPrompt.length} characters). Maximum allowed: 4000.`);
+    // We relax this for Team 3 to allow for semantic distillation of larger contexts (up to ~8k tokens)
+    if (rawPrompt.length > 32000) {
+      logger.warn('PromptGuard', 'PROMPT_TOO_LONG', 'Prompt exceeds absolute security limit.', { length: rawPrompt.length });
+      throw new PromptGuardError(`Prompt is too long (${rawPrompt.length} characters). Security limit is 32,000.`);
     }
 
     // 2. Jailbreak pattern matching

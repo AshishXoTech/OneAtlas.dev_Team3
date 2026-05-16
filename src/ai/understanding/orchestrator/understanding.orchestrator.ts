@@ -29,7 +29,7 @@ export class UnderstandingOrchestrator {
   private featureExtractor: FeatureExtractor;
   private appTypeExtractor: AppTypeExtractor;
 
-  constructor(router: ModelRouter) {
+  constructor(private router: ModelRouter) {
     this.intentExtractor = new IntentExtractor(router);
     this.featureExtractor = new FeatureExtractor(router);
     this.appTypeExtractor = new AppTypeExtractor(router);
@@ -59,12 +59,15 @@ export class UnderstandingOrchestrator {
         throw new Error('Prompt is too short. Please provide a meaningful application description.');
       }
 
-      // === EDGE CASE: Token overflow protection ===
+      // === EDGE CASE: Token overflow protection & Semantic Distillation ===
       const { safe, estimatedTokens } = assertPromptSafe(rawPrompt, 3500);
       let safePrompt = rawPrompt;
+      
       if (!safe) {
-        logger.warn('UnderstandingOrchestrator', 'TOKEN_OVERFLOW', 'Prompt exceeds safe token limit. Truncating.', { estimatedTokens });
-        safePrompt = truncateToTokenLimit(rawPrompt, 3500);
+        logger.info('UnderstandingOrchestrator', 'TOKEN_OVERFLOW', 'Prompt exceeds safe limit. Engaging Context Distiller.', { estimatedTokens });
+        const { ContextDistiller } = await import('./context.distiller.js');
+        const distiller = new ContextDistiller(this.router);
+        safePrompt = await distiller.distill(rawPrompt);
       }
 
       // 1. Parsing
@@ -106,16 +109,37 @@ export class UnderstandingOrchestrator {
         ? `BASELINE ARCHETYPE: ${JSON.stringify(baseline)}. Use this as a starting point and extend it based on the user's request. Output the FULL graph.`
         : '';
 
-      const [intentTitle, architecture] = await logger.trace('Extractors', 'PARALLEL_EXTRACT',
-        () => Promise.all([
-          this.intentExtractor.extract(parsed.original),
-          this.featureExtractor.extract(`Intent: ${parsed.original}. Category Scope: ${appType}. ${baselineContext}`)
-        ])
-      );
+      let intentTitle = 'My Application';
+      let architecture: any = { features: [], pages: [], entities: [], workflows: [] };
 
-      // === EDGE CASE: Empty extraction results ===
+      try {
+        const [title, arch] = await logger.trace('Extractors', 'PARALLEL_EXTRACT',
+          () => Promise.all([
+            this.intentExtractor.extract(parsed.original),
+            this.featureExtractor.extract(`Intent: ${parsed.original}. Category Scope: ${appType}. ${baselineContext}`)
+          ])
+        );
+        intentTitle = title;
+        architecture = arch;
+      } catch (extractError) {
+        logger.error('UnderstandingOrchestrator', 'EXTRACTION_CRASH', 'AI extractors critically failed. Engaging recovery.', extractError);
+        confidence = { score: 0.2, method: 'fallback', reliable: false };
+      }
+
+      // === EDGE CASE: Empty extraction results — Engage Semantic Heuristic ===
       if (architecture.features.length === 0) {
-        logger.warn('UnderstandingOrchestrator', 'EMPTY_FEATURES', 'Feature extractor returned no results. Applying minimal fallback.');
+        logger.warn('UnderstandingOrchestrator', 'EMPTY_FEATURES', 'Feature extractor returned no results. Synthesizing heuristic recovery.');
+        const { SemanticHeuristic } = await import('./semantic.heuristic.js');
+        const recovered = SemanticHeuristic.synthesize(parsed.original, appType);
+        
+        architecture = {
+          features: recovered.features,
+          pages: recovered.pages,
+          entities: recovered.entities,
+          workflows: recovered.workflows
+        };
+        intentTitle = recovered.appName || intentTitle;
+        confidence = { score: Math.min(confidence.score, 0.4), method: 'fallback', reliable: false };
       }
 
       // 4. Normalization

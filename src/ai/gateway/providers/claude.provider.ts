@@ -3,6 +3,7 @@ import { BaseProvider } from './base.provider.js';
 import { ProviderConfig, AIRequest, AIResponse } from '../types/gateway.types.js';
 import { MODELS_CONFIG } from '../config/models.config.js';
 import { PROVIDER_CONFIG } from '../config/provider.config.js';
+import { SafeCompletionExtractor } from './safe-completion.js';
 
 /**
  * Claude Provider using the official @anthropic-ai/sdk.
@@ -38,19 +39,14 @@ export class ClaudeProvider extends BaseProvider {
         temperature: request.temperature ?? 0.2,
       });
 
-      // Anthropic response content is an array of blocks
-      const contentBlock = response.content[0];
-      const content = contentBlock && 'text' in contentBlock ? contentBlock.text : '';
+      // PRINCIPAL FIX: Use safe extractor to prevent "content[0]" TypeErrors
+      const content = SafeCompletionExtractor.extractAnthropic(response, 'ANTHROPIC');
 
       return {
         content,
-        parsedOutput: undefined, // Handled by ValidationOrchestrator
-        usage: {
-          promptTokens: response.usage.input_tokens,
-          completionTokens: response.usage.output_tokens,
-          totalTokens: response.usage.input_tokens + response.usage.output_tokens,
-        },
-        model: response.model,
+        parsedOutput: undefined,
+        usage: SafeCompletionExtractor.extractUsage(response),
+        model: response.model || model,
       };
     } catch (error) {
       console.error('[ClaudeProvider] Generation failed:', error);

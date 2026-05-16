@@ -1,27 +1,27 @@
 import { z } from 'zod';
-import { BaseProvider } from '../../gateway/providers/base.provider.js';
 import { OutputFormatter } from '../formatters/output.formatter.js';
-import { AIRequest, AIResponse } from '../../gateway/types/gateway.types.js';
+import { AIRequest } from '../../gateway/types/gateway.types.js';
 import { tracer } from '../../shared/utils/intelligence_trace.js';
+import { ModelRouter } from '../../gateway/router/model.router.js';
 
+/**
+ * ResponseRecovery — adaptive repair pipeline.
+ * Uses the ModelRouter to find healthy recovery models (FAST tier).
+ */
 export class ResponseRecovery {
-  private provider: BaseProvider;
+  constructor(private router: ModelRouter) {}
 
-  constructor(provider: BaseProvider) {
-    this.provider = provider;
-  }
-
-  /**
-   * Triggers a recovery pipeline utilizing a fast, cheap AI model to auto-repair
-   * malformed JSON outputs based on the exact Zod validation error.
-   */
   async attemptRepair<T, E>(
     malformedContent: string,
     validationError: Error | z.ZodError,
     request: AIRequest<T, E>
   ): Promise<{ success: boolean; data?: T; error?: any }> {
     const schemaName = request.schemaName || 'repaired_response';
-    console.log(`[ResponseRecovery] Triggering repair pipeline for schema: ${schemaName}`);
+    
+    // Use the router to get a healthy recovery provider
+    const { provider, name: providerName } = this.router.getProviderForTask('RECOVERY');
+    
+    console.log(`[ResponseRecovery] Triggering repair pipeline for ${schemaName} on ${providerName}`);
 
     const systemPrompt = `Strict JSON repair engine. Fix validation/semantic errors. 
 Return FULL repaired JSON payload only. No markdown. No hallucinations.`;
@@ -53,21 +53,19 @@ ${errorMessage}
 INSTRUCTIONS:
 ${repairInstructions}`;
 
-    // The secondary request to the FAST model
     const repairRequest: AIRequest<any> = {
       prompt: userPrompt,
       systemPrompt,
-      modelTier: 'FAST', // Strongly enforcing FAST tier for recovery
-      temperature: 0.1, // Highly deterministic
+      modelTier: 'FAST', 
+      temperature: 0.1, 
       schema: request.extractionSchema || request.schema,
       schemaName
     };
 
     try {
       const repairStart = Date.now();
-      const response = await this.provider.generate(repairRequest);
+      const response = await provider.generate(repairRequest);
 
-      // Record recovery span
       tracer.recordSpan({
         id: `${schemaName}_repair`,
         tokensIn: response.usage.promptTokens,
@@ -97,12 +95,14 @@ ${repairInstructions}`;
           validatedOutput = request.schema.parse(repairedJson);
         }
 
-        console.log(`[ResponseRecovery] Successfully repaired and validated JSON for: ${schemaName}`);
+        console.log(`[ResponseRecovery] Successfully repaired JSON for: ${schemaName}`);
         return { success: true, data: validatedOutput };
       } catch (parseError) {
+        this.router.recordFailure(providerName, parseError);
         return { success: false, error: `Repaired content still failed validation: ${parseError instanceof Error ? parseError.message : String(parseError)}` };
       }
     } catch (error) {
+      this.router.recordFailure(providerName, error);
       console.error(`[ResponseRecovery] JSON repair critically failed.`, error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }

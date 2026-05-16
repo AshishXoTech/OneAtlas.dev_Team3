@@ -14,28 +14,56 @@ export interface RouteConfig {
  */
 export const ROUTING_CONFIG: Record<string, RouteConfig> = {
   RECOVERY: {
-    primaryProvider: 'GROQ',
-    fallbackProviders: ['OPENROUTER'],
+    primaryProvider: 'OPENROUTER',
+    fallbackProviders: ['GROQ'],
     preferredTier: 'FAST',
   },
+
   INTENT_EXTRACTION: {
     primaryProvider: 'GROQ',
     fallbackProviders: ['OPENROUTER'],
     preferredTier: 'FAST',
   },
-  ARCHITECTURE_DESIGN: {
-    primaryProvider: 'GROQ',
-    fallbackProviders: ['OPENROUTER'],
+
+  FEATURE_EXTRACTION: {
+    primaryProvider: 'OPENROUTER',
+    fallbackProviders: ['GROQ'],
     preferredTier: 'CAPABLE',
   },
-  GROQ_FAST: {
+
+  MUTATION_CLASSIFICATION: {
     primaryProvider: 'GROQ',
     fallbackProviders: ['OPENROUTER'],
     preferredTier: 'FAST',
   },
-  DEFAULT: {
+
+  GRAPH_MUTATION: {
+    primaryProvider: 'OPENROUTER',
+    fallbackProviders: ['GROQ'],
+    preferredTier: 'CAPABLE',
+  },
+
+  WORKFLOW_EXTRACTION: {
+    primaryProvider: 'OPENROUTER',
+    fallbackProviders: ['GROQ'],
+    preferredTier: 'REASONING',
+  },
+
+  LONG_CONTEXT_ANALYSIS: {
+    primaryProvider: 'OPENROUTER',
+    fallbackProviders: ['GROQ'],
+    preferredTier: 'REASONING',
+  },
+
+  NORMALIZATION_REPAIR: {
     primaryProvider: 'GROQ',
     fallbackProviders: ['OPENROUTER'],
+    preferredTier: 'FAST',
+  },
+
+  DEFAULT: {
+    primaryProvider: 'OPENROUTER',
+    fallbackProviders: ['GROQ'],
     preferredTier: 'CAPABLE',
   }
 };

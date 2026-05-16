@@ -10,25 +10,27 @@ export class FeatureExtractor {
    * Analyzes the prompt to extract complex architectural features, entities with fields, and pages.
    */
   async extract(promptContext: string): Promise<FeatureArchitecture> {
-    const { provider, config } = this.router.getProviderForTask('ARCHITECTURE_DESIGN');
-    const orchestrator = new ValidationOrchestrator(provider);
+    const { config } = this.router.getProviderForTask('FEATURE_EXTRACTION');
+    const orchestrator = new ValidationOrchestrator(this.router, 'FEATURE_EXTRACTION');
 
     const result = await orchestrator.executeWithValidation({
       prompt: promptContext,
-      systemPrompt: `Software architecture engine. Extract core features, UI pages, database entities, and workflows.
+      systemPrompt: `SYSTEM: Senior AI Runtime Systems Engineer.
+TASK: Extract an authoritative Intent Graph from the user's software description.
 
-RULES:
-- Features: id, name, description.
-- Pages: id, name, route, description, requiredEntities, layoutTemplate.
-- Entities: id, name, description, attributes (name, type, isRequired), relations (targetEntity, type).
-- Workflows: id, name, description, triggerType (USER_ACTION/SYSTEM_EVENT/SCHEDULED), executionMode (SYNC/ASYNC), steps[].
+GRAPH CONSTRAINTS:
+1. ENTITIES: Every data model must have a unique ID (e.g., "ent_user"), PascalCase name, and non-empty attributes.
+2. RELATIONS: targetEntity MUST refer to an existing Entity ID or name.
+3. PAGES: routes MUST be unique and start with "/". requiredEntities MUST refer to existing Entity IDs.
+4. WORKFLOWS: steps MUST be an ordered array of strings. triggerType MUST be one of: USER_ACTION, SYSTEM_EVENT, SCHEDULED.
 
-JSON FORMAT:
+OUTPUT FORMAT:
+Return a STRICT JSON object matching this structure:
 {
-  "features": [{ "id": "feat_1", "name": "Auth", "description": "Login/Reg" }],
-  "pages": [{ "id": "p1", "name": "Home", "route": "/", "description": "Landing", "requiredEntities": [], "layoutTemplate": "hero" }],
-  "entities": [{ "id": "e1", "name": "User", "description": "System user", "attributes": [{"name":"email","type":"string","isRequired":true}], "relations": [] }],
-  "workflows": [{ "id": "w1", "name": "Submit", "description": "Form", "triggerType": "USER_ACTION", "executionMode": "SYNC", "steps": ["Step 1"] }]
+  "features": [{ "id": "feat_auth", "name": "Authentication", "description": "User login/signup" }],
+  "pages": [{ "id": "p_home", "name": "Home", "route": "/home", "description": "Dashboard", "requiredEntities": ["ent_user"], "layoutTemplate": "dashboard" }],
+  "entities": [{ "id": "ent_user", "name": "User", "description": "System user", "attributes": [{"name":"email","type":"string","isRequired":true}], "relations": [{"targetEntity":"ent_org","type":"many-to-one"}] }],
+  "workflows": [{ "id": "wf_submit", "name": "Onboarding", "description": "New user flow", "triggerType": "USER_ACTION", "executionMode": "SYNC", "steps": ["Validate email", "Create account"] }]
 }`,
       schemaName: 'FeatureExtraction',
       modelTier: config.preferredTier,

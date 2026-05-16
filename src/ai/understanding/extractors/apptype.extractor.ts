@@ -18,8 +18,8 @@ export class AppTypeExtractor {
    * 4. Graceful degradation to "other" on any failure
    */
   async extract(prompt: string): Promise<AppCategory> {
-    const { provider, config } = this.router.getProviderForTask('INTENT_EXTRACTION');
-    const orchestrator = new ValidationOrchestrator(provider);
+    const { config } = this.router.getProviderForTask('INTENT_EXTRACTION');
+    const orchestrator = new ValidationOrchestrator(this.router, 'INTENT_EXTRACTION');
 
     // Permissive schema — accepts any string the model returns.
     // We normalize it ourselves via resolveCategory() instead of forcing Zod enum validation.

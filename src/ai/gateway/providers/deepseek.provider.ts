@@ -3,6 +3,7 @@ import { BaseProvider } from './base.provider.js';
 import { ProviderConfig, AIRequest, AIResponse } from '../types/gateway.types.js';
 import { MODELS_CONFIG } from '../config/models.config.js';
 import { PROVIDER_CONFIG } from '../config/provider.config.js';
+import { SafeCompletionExtractor } from './safe-completion.js';
 
 /**
  * DeepSeek Provider using the OpenAI-compatible SDK.
@@ -39,17 +40,14 @@ export class DeepSeekProvider extends BaseProvider {
         ...(request.schema ? { response_format: { type: 'json_object' } } : {}),
       });
 
-      const content = completion.choices[0]?.message.content || '';
+      // PRINCIPAL FIX: Use safe extractor to prevent "choices[0]" TypeErrors
+      const content = SafeCompletionExtractor.extractOpenAI(completion, 'DEEPSEEK');
 
       return {
         content,
-        parsedOutput: undefined, // Handled by ValidationOrchestrator
-        usage: {
-          promptTokens: completion.usage?.prompt_tokens || 0,
-          completionTokens: completion.usage?.completion_tokens || 0,
-          totalTokens: completion.usage?.total_tokens || 0,
-        },
-        model: completion.model,
+        parsedOutput: undefined,
+        usage: SafeCompletionExtractor.extractUsage(completion),
+        model: completion.model || model,
       };
     } catch (error) {
       console.error('[DeepSeekProvider] Generation failed:', error);

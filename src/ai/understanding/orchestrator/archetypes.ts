@@ -19,5 +19,13 @@ export const ARCHETYPE_BASELINES: Record<string, any> = {
       { "id": "ent_comment", "name": "Comment", "description": "User feedback", "attributes": [{ "name": "content", "type": "string", "isRequired": true }] }
     ],
     "features": [{ "id": "feat_posting", "name": "Content Management", "description": "Create and edit posts" }]
+  },
+  "other": {
+    "entities": [
+      { "id": "ent_generic", "name": "Entity", "description": "Generic entity", "attributes": [{ "name": "name", "type": "string", "isRequired": true }] }
+    ],
+    "features": [{ "id": "feat_generic", "name": "Base Features", "description": "Standard application capabilities" }],
+    "pages": [],
+    "workflows": []
   }
 };
