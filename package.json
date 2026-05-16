@@ -19,15 +19,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AshishXoTech/OneAtlas.dev_Team3.git"
+    "url": "git+https://github.com/TheAiSignal/dev_oneatlas.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/AshishXoTech/OneAtlas.dev_Team3/issues"
+    "url": "https://github.com/TheAiSignal/dev_oneatlas/issues"
   },
-  "homepage": "https://github.com/AshishXoTech/OneAtlas.dev_Team3#readme",
+  "homepage": "https://github.com/TheAiSignal/dev_oneatlas#readme",
   "description": "",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",
