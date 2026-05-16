@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 
 import type { AppUnderstanding } from '../../shared/types/app-understanding.types.js';
+import { logger } from '../../shared/utils/logger.js';
 
 import type {
   AppRouteConfig,
@@ -222,7 +223,7 @@ export const PIPELINE_STEPS: PipelineStep[] = [
     name: 'Deployment Handoff',
     run: async (context) => {
       if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
-        console.error('[Pipeline] Redis unconfigured. Cannot perform deployment handoff.');
+        logger.error('Pipeline', 'REDIS_UNCONFIGURED', 'Redis unconfigured. Cannot perform deployment handoff.');
         return context;
       }
 

@@ -1,4 +1,5 @@
 import type { AppUnderstanding } from '../shared/types/app-understanding.types.js';
+import { logger } from '../shared/utils/logger.js';
 
 import {
   pipelineExecutor,
@@ -65,10 +66,7 @@ export async function runGenerationPipeline(
       orgId,
     )
     .catch((error: unknown) => {
-      console.error(
-        `Pipeline failed for run ${runId}:`,
-        error,
-      );
+      logger.error('Workflow', 'PIPELINE_FAILED', `Pipeline failed for run ${runId}`, { error: error instanceof Error ? error.message : String(error) });
     });
 
   return {
