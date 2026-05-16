@@ -122,7 +122,7 @@ export class UnderstandingOrchestrator {
         intentTitle = title;
         architecture = arch;
       } catch (extractError) {
-        logger.error('UnderstandingOrchestrator', 'EXTRACTION_CRASH', 'AI extractors critically failed. Engaging recovery.', extractError);
+        logger.error('UnderstandingOrchestrator', 'EXTRACTION_CRASH', 'AI extractors critically failed. Engaging recovery.', { error: String(extractError) });
         confidence = { score: 0.2, method: 'fallback', reliable: false };
       }
 
@@ -144,7 +144,7 @@ export class UnderstandingOrchestrator {
 
       // 4. Normalization
       const normalizedEntities = this.appNormalizer.normalizeEntities(
-        architecture.entities.map(entity => ({
+        architecture.entities.map((entity: Entity) => ({
           id: entity.id,
           name: entity.name,
           description: entity.description,
