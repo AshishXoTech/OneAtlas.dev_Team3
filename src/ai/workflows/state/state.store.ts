@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { logger } from '../../shared/utils/logger.js';
 
 import type {
   GenerationResult,
@@ -44,7 +45,7 @@ class StateStore {
     value: unknown,
   ): Promise<void> {
     if (!this.redisUrl || !this.redisToken) {
-      console.warn(`[StateStore] Redis unconfigured. Skipping write for key: ${key}`);
+      logger.warn('StateStore', 'REDIS_UNCONFIGURED', `Redis unconfigured. Skipping write for key: ${key}`);
       return;
     }
 

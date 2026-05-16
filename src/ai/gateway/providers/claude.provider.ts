@@ -4,6 +4,7 @@ import { ProviderConfig, AIRequest, AIResponse } from '../types/gateway.types.js
 import { MODELS_CONFIG } from '../config/models.config.js';
 import { PROVIDER_CONFIG } from '../config/provider.config.js';
 import { SafeCompletionExtractor } from './safe-completion.js';
+import { logger } from '../../shared/utils/logger.js';
 
 /**
  * Claude Provider using the official @anthropic-ai/sdk.
@@ -49,7 +50,7 @@ export class ClaudeProvider extends BaseProvider {
         model: response.model || model,
       };
     } catch (error) {
-      console.error('[ClaudeProvider] Generation failed:', error);
+      logger.error('ClaudeProvider', 'GENERATION_FAILED', `Generation failed for tier ${request.modelTier}`, { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }

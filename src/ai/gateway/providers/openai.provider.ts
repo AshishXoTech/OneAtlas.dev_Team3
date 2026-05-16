@@ -5,6 +5,7 @@ import { ProviderConfig, AIRequest, AIResponse } from '../types/gateway.types.js
 import { MODELS_CONFIG } from '../config/models.config.js';
 import { PROVIDER_CONFIG } from '../config/provider.config.js';
 import { SafeCompletionExtractor } from './safe-completion.js';
+import { logger } from '../../shared/utils/logger.js';
 
 export class OpenAIProvider extends BaseProvider {
   private client: OpenAI;
@@ -57,7 +58,7 @@ export class OpenAIProvider extends BaseProvider {
           parsedOutput = request.schema.parse(JSON.parse(content));
         } catch (parseErr) {
           // If native parsing fails, we still return content so Orchestrator can recover
-          console.warn('[OpenAIProvider] Native parse failed, relying on Orchestrator recovery.');
+          logger.warn('OpenAIProvider', 'NATIVE_PARSE_FAILED', 'Native parse failed, relying on Orchestrator recovery.');
         }
       }
 
@@ -69,7 +70,7 @@ export class OpenAIProvider extends BaseProvider {
       };
     } catch (error) {
       // In production, integrate this with the ResponseRecovery or a Logger.
-      console.error('[OpenAIProvider] Generation failed:', error);
+      logger.error('OpenAIProvider', 'GENERATION_FAILED', `Generation failed for tier ${request.modelTier}`, { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
